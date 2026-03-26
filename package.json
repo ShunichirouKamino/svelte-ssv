@@ -1,0 +1,30 @@
+{
+	"name": "ssv",
+	"version": "0.2.0",
+	"type": "module",
+	"description": "Svelte Simple Form Validation — A lightweight Zod-based form validation library",
+	"license": "MIT",
+	"author": "ShunichirouKamino",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ShunichirouKamino/ssv.git"
+	},
+	"keywords": [
+		"svelte",
+		"sveltekit",
+		"form",
+		"validation",
+		"zod"
+	],
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"peerDependencies": {
+		"zod": "^3.25.0"
+	},
+	"devDependencies": {
+		"jsdom": "^29.0.1",
+		"vitest": "^4.1.1",
+		"zod": "^4.3.6"
+	}
+}
