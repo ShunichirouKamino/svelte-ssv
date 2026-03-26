@@ -7,7 +7,7 @@
 Svelte 5's `$state`, `bind:value`, and SvelteKit's `use:enhance` already cover 90% of form management that React developers need react-hook-form for. The one missing piece is converting Zod validation errors into field-indexed errors — and that's exactly what ssv does, in ~50 lines of code.
 
 - **Framework-agnostic core** — `createFormValidator` is pure TypeScript with zero framework dependencies
-- **SvelteKit integration** — Optional `createEnhanceHandler` reduces `use:enhance` boilerplate to a single attribute
+- **SvelteKit integration** — Optional `@svelte-ssv/core/enhance` reduces `use:enhance` boilerplate to a single attribute
 - **Zod version independent** — Works with both Zod v3 and v4 (no Zod type imports)
 - **Tiny** — ~1 KB source, no runtime dependencies beyond Zod
 
@@ -42,9 +42,8 @@ const result = validator.validate({ name: '', email: 'bad' });
 
 ```svelte
 <script>
-  import { createFormValidator, createEnhanceHandler } from '@svelte-ssv/core';
-  import type { FormErrors } from '@svelte-ssv/core';
-  import { enhance } from '$app/forms';
+  import { createFormValidator, type FormErrors } from '@svelte-ssv/core';
+  import { createEnhanceHandler } from '@svelte-ssv/core/enhance';
 
   const schema = z.object({
     name: z.string().min(1, 'Name is required'),
@@ -92,7 +91,9 @@ const result = validator.validate({ name: '', email: 'bad' });
 
 ## API Reference
 
-### `createFormValidator(schema)`
+### `@svelte-ssv/core` — Core (framework-agnostic)
+
+#### `createFormValidator(schema)`
 
 Creates a form validator from a Zod schema. Returns a `FormValidator<T>` with the following methods:
 
@@ -104,9 +105,25 @@ Creates a form validator from a Zod schema. Returns a `FormValidator<T>` with th
 | `parseErrors(zodError)` | Convert Zod error issues into field-indexed `FormErrors<T>` |
 | `setServerError(message)` | Create a form-level error (`{ _form: [message] }`) |
 
-### `createEnhanceHandler(validator, options)`
+#### `FormErrors<T>`
+
+```typescript
+type FormErrors<T> = {
+  [K in keyof T]?: string[];
+} & {
+  _form?: string[];  // Form-level errors (not tied to a specific field)
+};
+```
+
+### `@svelte-ssv/core/enhance` — SvelteKit Helper
+
+#### `createEnhanceHandler(validator, options)`
 
 Generates a callback for SvelteKit's `use:enhance` directive. Handles the validation → cancel/submit → update → onSuccess flow internally.
+
+```typescript
+import { createEnhanceHandler } from '@svelte-ssv/core/enhance';
+```
 
 **Options:**
 
@@ -117,16 +134,6 @@ Generates a callback for SvelteKit's `use:enhance` directive. Handles the valida
 | `onSuccess?` | `() => void` | Called on successful server response |
 | `onBeforeSubmit?` | `() => boolean \| void` | Pre-submit hook. Return `false` to cancel |
 | `onAfterSubmit?` | `() => void` | Called after submission regardless of outcome |
-
-### `FormErrors<T>`
-
-```typescript
-type FormErrors<T> = {
-  [K in keyof T]?: string[];
-} & {
-  _form?: string[];  // Form-level errors (not tied to a specific field)
-};
-```
 
 ## Design Philosophy
 

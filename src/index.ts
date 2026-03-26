@@ -1,38 +1,26 @@
 /**
  * @module @svelte-ssv/core
  *
- * Svelte Simple Form Validation — A lightweight form validation library built on Zod.
+ * Svelte Simple Validation — A lightweight form validation library built on Zod.
  *
- * Core Validator (framework-agnostic):
- * - `createFormValidator` — Create a validator from a Zod schema
- *
- * SvelteKit Helpers:
- * - `createEnhanceHandler` — Generate a callback for SvelteKit `use:enhance`
+ * This is the core entry point (framework-agnostic).
+ * For SvelteKit `use:enhance` integration, import from `@svelte-ssv/core/enhance`.
  *
  * @example
- * ```svelte
- * <script>
- *   import { createFormValidator, createEnhanceHandler } from '@svelte-ssv/core';
+ * ```typescript
+ * import { createFormValidator } from '@svelte-ssv/core';
+ * import { z } from 'zod';
  *
- *   const validator = createFormValidator(mySchema);
- *   let formData = $state({ name: '' });
- *   let errors = $state({});
+ * const schema = z.object({
+ *   name: z.string().min(1, 'Name is required'),
+ *   email: z.string().email('Invalid email format'),
+ * });
  *
- *   const handleEnhance = createEnhanceHandler(validator, {
- *     getData: () => formData,
- *     setErrors: (e) => { errors = e },
- *     onSuccess: () => closeDialog(),
- *   });
- * </script>
- *
- * <form use:enhance={handleEnhance} novalidate>
- *   <input bind:value={formData.name} />
- * </form>
+ * const validator = createFormValidator(schema);
+ * const result = validator.validate({ name: '', email: 'bad' });
  * ```
  */
 
-export type { EnhanceHandlerOptions } from "./enhance";
-export { createEnhanceHandler } from "./enhance";
 export type {
 	FieldValidationResult,
 	FormErrors,

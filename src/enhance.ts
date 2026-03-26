@@ -1,5 +1,5 @@
 /**
- * @module enhance
+ * @module @svelte-ssv/core/enhance
  *
  * SvelteKit `use:enhance` helper.
  *
@@ -7,10 +7,14 @@
  * Internalizes the validation → cancel/submit → update → onSuccess flow,
  * reducing boilerplate on the consumer side.
  *
+ * Import the core validator from `@svelte-ssv/core` and the enhance handler
+ * from `@svelte-ssv/core/enhance`:
+ *
  * @example
  * ```svelte
  * <script>
- *   import { createFormValidator, createEnhanceHandler } from '@svelte-ssv/core';
+ *   import { createFormValidator } from '@svelte-ssv/core';
+ *   import { createEnhanceHandler } from '@svelte-ssv/core/enhance';
  *
  *   const validator = createFormValidator(mySchema);
  *   let formData = $state({ name: '' });

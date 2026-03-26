@@ -1,11 +1,8 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { z } from "zod";
-	import {
-		createFormValidator,
-		createEnhanceHandler,
-		type FormErrors,
-	} from "@svelte-ssv/core";
+	import { createFormValidator, type FormErrors } from "@svelte-ssv/core";
+	import { createEnhanceHandler } from "@svelte-ssv/core/enhance";
 
 	const loginSchema = z.object({
 		email: z.string().min(1, "Email is required").email("Invalid email format"),

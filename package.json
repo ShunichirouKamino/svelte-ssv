@@ -29,6 +29,16 @@
 				"types": "./dist/index.d.cts",
 				"default": "./dist/index.cjs"
 			}
+		},
+		"./enhance": {
+			"import": {
+				"types": "./dist/enhance.d.ts",
+				"default": "./dist/enhance.js"
+			},
+			"require": {
+				"types": "./dist/enhance.d.cts",
+				"default": "./dist/enhance.cjs"
+			}
 		}
 	},
 	"files": [
