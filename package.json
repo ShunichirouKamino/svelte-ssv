@@ -2,12 +2,12 @@
 	"name": "@svelte-ssv/core",
 	"version": "0.2.0",
 	"type": "module",
-"description": "Svelte Simple Validation — A lightweight Zod-based form validation library",
+	"description": "Svelte Simple Validation — A lightweight Zod-based form validation library",
 	"license": "MIT",
 	"author": "ShunichirouKamino",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ShunichirouKamino/svelte-ssv.git"
+		"url": "git+https://github.com/ShunichirouKamino/svelte-ssv.git"
 	},
 	"keywords": [
 		"svelte",
@@ -16,14 +16,36 @@
 		"validation",
 		"zod"
 	],
+	"main": "./dist/index.cjs",
+	"module": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"exports": {
-		".": "./src/index.ts"
+		".": {
+			"import": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.cts",
+				"default": "./dist/index.cjs"
+			}
+		}
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsup",
+		"test": "vitest run",
+		"prepublishOnly": "npm run build && npm test"
 	},
 	"peerDependencies": {
 		"zod": "^3.25.0"
 	},
 	"devDependencies": {
 		"jsdom": "^29.0.1",
+		"tsup": "^8.5.1",
+		"typescript": "~5.8.0",
 		"vitest": "^4.1.1",
 		"zod": "^4.3.6"
 	}

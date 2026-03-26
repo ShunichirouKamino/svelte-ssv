@@ -1,0 +1,56 @@
+name: Resolve Version
+description: Calculate next semver version from existing git tags
+
+inputs:
+  bump:
+    description: "Version bump category: major | minor | micro"
+    required: true
+  versions:
+    description: "Existing versions (newline-separated, X.Y.Z format)"
+    required: false
+    default: ""
+  fallback:
+    description: "Initial version when no versions exist"
+    required: false
+    default: "0.1.0"
+
+outputs:
+  version:
+    description: "Calculated next version"
+    value: ${{ steps.calc.outputs.version }}
+  current:
+    description: "Current latest version (or 'none')"
+    value: ${{ steps.calc.outputs.current }}
+
+runs:
+  using: composite
+  steps:
+    - id: calc
+      shell: bash
+      run: |
+        BUMP="${{ inputs.bump }}"
+        VERSIONS="${{ inputs.versions }}"
+        FALLBACK="${{ inputs.fallback }}"
+
+        if [ -z "$VERSIONS" ]; then
+          echo "version=$FALLBACK" >> "$GITHUB_OUTPUT"
+          echo "current=none" >> "$GITHUB_OUTPUT"
+          echo "No existing versions found. Using fallback: $FALLBACK"
+          exit 0
+        fi
+
+        # Sort versions and pick latest
+        CURRENT=$(echo "$VERSIONS" | sort -t. -k1,1n -k2,2n -k3,3n | tail -1)
+        echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+
+        IFS='.' read -r MAJOR MINOR MICRO <<< "$CURRENT"
+
+        case "$BUMP" in
+          major) NEXT="$((MAJOR + 1)).0.0" ;;
+          minor) NEXT="${MAJOR}.$((MINOR + 1)).0" ;;
+          micro) NEXT="${MAJOR}.${MINOR}.$((MICRO + 1))" ;;
+          *) echo "Invalid bump: $BUMP"; exit 1 ;;
+        esac
+
+        echo "version=$NEXT" >> "$GITHUB_OUTPUT"
+        echo "Resolved: $CURRENT → $NEXT ($BUMP)"

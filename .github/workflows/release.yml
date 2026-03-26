@@ -1,0 +1,166 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump (micro / minor / major)"
+        required: true
+        type: choice
+        options:
+          - micro
+          - minor
+          - major
+      dry_run:
+        description: "Dry run (resolve version only, skip publish)"
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  resolve-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      current: ${{ steps.resolve.outputs.current }}
+      tag: v${{ steps.resolve.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect existing versions
+        id: versions
+        run: |
+          VERSIONS=$(git tag -l 'v*' | sed 's/^v//' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' || true)
+          {
+            echo "list<<EOF"
+            echo "$VERSIONS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Resolve next version
+        id: resolve
+        uses: ./.github/actions/resolve-version
+        with:
+          bump: ${{ inputs.bump }}
+          versions: ${{ steps.versions.outputs.list }}
+
+      - name: Summary
+        run: |
+          echo "### Version Resolution" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Field | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-------|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Bump | ${{ inputs.bump }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Current | ${{ steps.resolve.outputs.current }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Next | ${{ steps.resolve.outputs.version }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Tag | v${{ steps.resolve.outputs.version }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Dry run | ${{ inputs.dry_run }} |" >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    needs: resolve-version
+    if: ${{ inputs.dry_run == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Update version in package.json
+        run: npm version ${{ needs.resolve-version.outputs.version }} --no-git-tag-version
+
+      - name: Commit version bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "release: v${{ needs.resolve-version.outputs.version }}"
+
+      - name: Create tag
+        run: |
+          git tag -a "v${{ needs.resolve-version.outputs.version }}" \
+            -m "Release v${{ needs.resolve-version.outputs.version }}"
+
+      - name: Push commit and tag
+        run: |
+          git push origin main
+          git push origin "v${{ needs.resolve-version.outputs.version }}"
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          CURRENT="${{ needs.resolve-version.outputs.current }}"
+          VERSION="${{ needs.resolve-version.outputs.version }}"
+
+          if [ "$CURRENT" = "none" ]; then
+            COMMITS=$(git log --oneline --no-merges)
+          else
+            COMMITS=$(git log "v${CURRENT}..HEAD" --oneline --no-merges | grep -v "^.*release: v" || true)
+          fi
+
+          FEATURES=$(echo "$COMMITS" | grep -i "^[a-f0-9]* feat" || true)
+          FIXES=$(echo "$COMMITS" | grep -i "^[a-f0-9]* fix" || true)
+          DOCS=$(echo "$COMMITS" | grep -i "^[a-f0-9]* docs\|^[a-f0-9]* doc" || true)
+          OTHER=$(echo "$COMMITS" | grep -iv "^[a-f0-9]* feat\|^[a-f0-9]* fix\|^[a-f0-9]* docs\|^[a-f0-9]* doc\|^$" || true)
+
+          {
+            echo "body<<EOF"
+            echo "## What's Changed"
+            echo ""
+            if [ -n "$FEATURES" ]; then
+              echo "### Features"
+              echo "$FEATURES" | sed 's/^/- /'
+              echo ""
+            fi
+            if [ -n "$FIXES" ]; then
+              echo "### Bug Fixes"
+              echo "$FIXES" | sed 's/^/- /'
+              echo ""
+            fi
+            if [ -n "$DOCS" ]; then
+              echo "### Documentation"
+              echo "$DOCS" | sed 's/^/- /'
+              echo ""
+            fi
+            if [ -n "$OTHER" ]; then
+              echo "### Other"
+              echo "$OTHER" | sed 's/^/- /'
+              echo ""
+            fi
+            echo "**Full Changelog**: https://github.com/ShunichirouKamino/svelte-ssv/compare/v${CURRENT}...v${VERSION}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.resolve-version.outputs.version }}
+          name: v${{ needs.resolve-version.outputs.version }}
+          body: ${{ steps.notes.outputs.body }}
+          draft: false
+          prerelease: false
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
