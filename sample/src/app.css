@@ -1,0 +1,36 @@
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+}
+
+:root {
+	--color-bg: #f8f9fa;
+	--color-surface: #ffffff;
+	--color-primary: #4f46e5;
+	--color-primary-hover: #4338ca;
+	--color-error: #dc2626;
+	--color-success: #16a34a;
+	--color-text: #1f2937;
+	--color-text-muted: #6b7280;
+	--color-border: #d1d5db;
+	--radius: 8px;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+	background: var(--color-bg);
+	color: var(--color-text);
+	line-height: 1.6;
+}
+
+a {
+	color: var(--color-primary);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
