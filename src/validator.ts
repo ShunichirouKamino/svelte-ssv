@@ -35,7 +35,7 @@
  * Self-defined to avoid direct type dependency on Zod.
  */
 type ZodIssueMinimal = {
-	path: (string | number)[];
+	path: PropertyKey[];
 	message: string;
 };
 
