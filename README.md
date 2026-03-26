@@ -1,6 +1,6 @@
 # @svelte-ssv/core
 
-**Svelte Simple Form Validation** — A lightweight Zod-based form validation library for Svelte/SvelteKit.
+**SSV (Svelte Simple Validation)** — A lightweight Zod-based form validation library for Svelte/SvelteKit.
 
 ## Why ssv?
 

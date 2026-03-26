@@ -2,12 +2,12 @@
 	"name": "@svelte-ssv/core",
 	"version": "0.2.0",
 	"type": "module",
-	"description": "Svelte Simple Form Validation — A lightweight Zod-based form validation library",
+	"description": "Svelte Simple Validation — A lightweight Zod-based form validation library",
 	"license": "MIT",
 	"author": "ShunichirouKamino",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/ShunichirouKamino/ssv.git"
+		"url": "https://github.com/ShunichirouKamino/svelte-ssv.git"
 	},
 	"keywords": [
 		"svelte",
