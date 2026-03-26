@@ -1,4 +1,4 @@
-# @classification/ssv
+# @svelte-ssv/core
 
 **Svelte Simple Form Validation** — A lightweight Zod-based form validation library for Svelte/SvelteKit.
 
@@ -14,7 +14,7 @@ Svelte 5's `$state`, `bind:value`, and SvelteKit's `use:enhance` already cover 9
 ## Installation
 
 ```bash
-npm install @classification/ssv
+npm install @svelte-ssv/core
 ```
 
 > **Peer dependency**: `zod ^3.25.0`
@@ -24,7 +24,7 @@ npm install @classification/ssv
 ### Basic Validation
 
 ```typescript
-import { createFormValidator } from '@classification/ssv';
+import { createFormValidator } from '@svelte-ssv/core';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -42,8 +42,8 @@ const result = validator.validate({ name: '', email: 'bad' });
 
 ```svelte
 <script>
-  import { createFormValidator, createEnhanceHandler } from '@classification/ssv';
-  import type { FormErrors } from '@classification/ssv';
+  import { createFormValidator, createEnhanceHandler } from '@svelte-ssv/core';
+  import type { FormErrors } from '@svelte-ssv/core';
   import { enhance } from '$app/forms';
 
   const schema = z.object({

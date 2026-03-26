@@ -1,5 +1,5 @@
 /**
- * @module @classification/ssv
+ * @module @svelte-ssv/core
  *
  * Svelte Simple Form Validation — A lightweight form validation library built on Zod.
  *
@@ -12,7 +12,7 @@
  * @example
  * ```svelte
  * <script>
- *   import { createFormValidator, createEnhanceHandler } from '@classification/ssv';
+ *   import { createFormValidator, createEnhanceHandler } from '@svelte-ssv/core';
  *
  *   const validator = createFormValidator(mySchema);
  *   let formData = $state({ name: '' });

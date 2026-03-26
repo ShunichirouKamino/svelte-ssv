@@ -1,5 +1,5 @@
 {
-	"name": "ssv",
+	"name": "@svelte-ssv/core",
 	"version": "0.2.0",
 	"type": "module",
 	"description": "Svelte Simple Form Validation — A lightweight Zod-based form validation library",

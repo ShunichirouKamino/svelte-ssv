@@ -1,4 +1,4 @@
-# ADR: @classification/ssv v0.2 — Real-time Validation + Boilerplate Reduction
+# ADR: @svelte-ssv/core v0.2 — Real-time Validation + Boilerplate Reduction
 
 - **Date**: 2026-03-25
 - **Status**: Accepted
@@ -47,7 +47,7 @@ errors = validator.mergeFieldErrors(errors, "email", result);
 - Since ssv's primary use case is SvelteKit Form Actions, providing a helper conforming to SvelteKit's `SubmitFunction` type has high value
 - The core `createFormValidator` remains framework-agnostic (pure TypeScript)
 - `enhance.ts` is a separate file, allowing SvelteKit-free environments to use only the core (`validator.ts`)
-- For future npm publishing, it can be separated via subpath exports like `@classification/ssv/enhance`
+- For future npm publishing, it can be separated via subpath exports like `@svelte-ssv/core/enhance`
 
 ### Rejected: `createFormState` with built-in $state
 

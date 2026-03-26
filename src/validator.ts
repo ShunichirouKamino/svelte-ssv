@@ -6,7 +6,7 @@
  *
  * @example
  * ```typescript
- * import { createFormValidator } from '@classification/ssv';
+ * import { createFormValidator } from '@svelte-ssv/core';
  * import { z } from 'zod';
  *
  * const schema = z.object({
@@ -146,7 +146,7 @@ export type FormValidator<T extends Record<string, unknown>> = {
  * @example
  * ```svelte
  * <script>
- *   import { createFormValidator } from '@classification/ssv';
+ *   import { createFormValidator } from '@svelte-ssv/core';
  *   import { mySchema, type MyForm } from '$lib/schemas';
  *
  *   const validator = createFormValidator(mySchema);

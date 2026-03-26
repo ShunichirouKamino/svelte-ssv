@@ -1,4 +1,4 @@
-# ADR: @classification/ssv — Design Decisions for Svelte Simple Form Validation
+# ADR: @svelte-ssv/core — Design Decisions for Svelte Simple Form Validation
 
 - **Date**: 2026-03-25
 - **Status**: Accepted
@@ -112,7 +112,7 @@ Svelte has a fundamentally different architecture from React:
 
 ## Decision
 
-### Adopted: `@classification/ssv` (custom lightweight package)
+### Adopted: `@svelte-ssv/core` (custom lightweight package)
 
 ```
 ssv/
@@ -126,7 +126,7 @@ ssv/
 **Single API:**
 
 ```typescript
-import { createFormValidator } from '@classification/ssv';
+import { createFormValidator } from '@svelte-ssv/core';
 
 const validator = createFormValidator(tenantUpsertSchema);
 const result = validator.validate(formData);
