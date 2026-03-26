@@ -119,7 +119,7 @@ ssv/
 ├── package.json          ← peerDependency: zod ^3.25.0
 └── src/
     ├── index.ts
-    ├── validator.ts       ← createFormValidator (~50 lines)
+    ├── validator.ts       ← createFormValidator (lightweight)
     └── validator.test.ts  ← 6 tests
 ```
 
@@ -306,7 +306,7 @@ How Svelte 5 natively solves the challenges that react-hook-form addressed in Re
 | Submit handling | `handleSubmit(onValid, onInvalid)` | `use:enhance` + `cancel()` |
 | Progressive Enhancement | None | `use:enhance` built-in |
 
-**In Svelte 5, 7/7 problems that React form libraries solve are handled at the language/framework level.** The only remaining need is a utility to "convert Zod's error object into field-indexed errors." This is ssv's raison d'etre, and why it can be accomplished in ~50 lines.
+**In Svelte 5, 7/7 problems that React form libraries solve are handled at the language/framework level.** The only remaining need is a utility to "convert Zod's error object into field-indexed errors." This is ssv's raison d'etre, and why it can remain a lightweight utility.
 
 ### Why Writing Forms with "Raw Syntax" in Svelte is Better
 

@@ -4,7 +4,7 @@
 
 ## Why ssv?
 
-Svelte 5's `$state`, `bind:value`, and SvelteKit's `use:enhance` already cover 90% of form management that React developers need react-hook-form for. The one missing piece is converting Zod validation errors into field-indexed errors — and that's exactly what ssv does, in ~50 lines of code.
+Svelte 5's `$state`, `bind:value`, and SvelteKit's `use:enhance` already cover 90% of form management that React developers need react-hook-form for. The one missing piece is converting Zod validation errors into field-indexed errors — and that's exactly what ssv does, as a lightweight utility.
 
 - **Framework-agnostic core** — `createFormValidator` is pure TypeScript with zero framework dependencies
 - **SvelteKit integration** — Optional `@svelte-ssv/core/enhance` reduces `use:enhance` boilerplate to a single attribute
