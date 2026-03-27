@@ -44,7 +44,15 @@
 	const handleEnhance = createEnhanceHandler(form.validator, {
 		getData: () => form.data,
 		setErrors: (e) => {
+			// Mark all fields touched so submit errors are visible
+			form.validate();
 			form.errors = e;
+			// Show field errors as toasts
+			for (const [field, messages] of Object.entries(e)) {
+				if (field !== "_form" && messages && (messages as string[]).length > 0) {
+					addToast((messages as string[])[0]);
+				}
+			}
 			// Show form-level errors as toasts
 			if (e._form) {
 				for (const msg of e._form) {

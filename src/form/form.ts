@@ -136,7 +136,9 @@ export function createForm<T extends Record<string, unknown>>(
 		dirty,
 
 		get isDirty(): boolean {
-			return Object.values(this.dirty).some(Boolean);
+			return keys.some(
+				(key) => this.data[key] !== _initialData[key],
+			);
 		},
 
 		get validator(): FormValidator<T> {
@@ -155,9 +157,10 @@ export function createForm<T extends Record<string, unknown>>(
 		},
 
 		validate(): ValidationResult<T> {
-			// Mark all fields as touched
+			// Mark all fields as touched and update dirty state
 			for (const key of keys) {
 				this.touched[key] = true;
+				this.dirty[key] = this.data[key] !== _initialData[key];
 			}
 
 			const result = _validator.validate(

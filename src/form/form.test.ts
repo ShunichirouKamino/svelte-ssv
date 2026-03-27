@@ -110,6 +110,19 @@ describe("createForm", () => {
 			form.blur("name");
 			expect(form.dirty.name).toBe(false);
 		});
+
+		it("isDirty reflects current data without requiring blur", () => {
+			const form = createForm(testSchema, initial);
+			expect(form.isDirty).toBe(false);
+
+			// Change data without blurring
+			form.data.name = "changed";
+			expect(form.isDirty).toBe(true);
+
+			// Revert without blurring
+			form.data.name = "";
+			expect(form.isDirty).toBe(false);
+		});
 	});
 
 	// ---------------------------------------------------------------
@@ -142,6 +155,17 @@ describe("createForm", () => {
 
 			expect(form.touched.name).toBe(true);
 			expect(form.touched.email).toBe(true);
+		});
+
+		it("updates dirty state for all fields", () => {
+			const form = createForm(testSchema, initial);
+			form.data.name = "changed";
+			expect(form.dirty.name).toBe(false); // not yet computed
+
+			form.validate();
+
+			expect(form.dirty.name).toBe(true);
+			expect(form.dirty.email).toBe(false);
 		});
 
 		it("clears errors on successful validation", () => {

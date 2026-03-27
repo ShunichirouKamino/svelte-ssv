@@ -54,6 +54,8 @@
 	const handleEnhance = createEnhanceHandler(form.validator, {
 		getData: () => form.data,
 		setErrors: (e) => {
+			// Mark all fields touched so summary errors become visible on submit
+			form.validate();
 			form.errors = e;
 			showSummary = true;
 		},
