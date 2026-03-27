@@ -1,0 +1,27 @@
+{
+  "categories": {
+    "default": {
+      "description": "Required skills (always installed)",
+      "skills": [
+        "setup-check"
+      ]
+    },
+    "common": {
+      "description": "Common skills (all projects)",
+      "skills": [
+        "create-issue",
+        "create-pr",
+        "release",
+        "resolve-issue",
+        "review",
+        "review-respond"
+      ]
+    }
+  },
+  "ignore": [
+    "domains",
+    "practices",
+    "publish-tool",
+    "security-review"
+  ]
+}

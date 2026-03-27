@@ -1,0 +1,4 @@
+{
+  "titleFormat": "[Issue#{issueNumber}] {summary}",
+  "assignSelf": true
+}

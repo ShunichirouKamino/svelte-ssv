@@ -1,0 +1,24 @@
+{
+  "excludePatterns": [
+    "**/build/**",
+    "**/generated/**",
+    "**/dist/**",
+    "**/node_modules/**"
+  ],
+  "additionalChecks": [],
+  "perspectives": [
+    "architecture",
+    "security",
+    "performance",
+    "reliability",
+    "maintainability"
+  ],
+  "codex": {
+    "enabled": "auto",
+    "promptTemplate": "references/codex-prompt-template.md"
+  },
+  "projectScope": {
+    "outputDir": "docs/reviews/"
+  },
+  "projectDescription": "Software project"
+}

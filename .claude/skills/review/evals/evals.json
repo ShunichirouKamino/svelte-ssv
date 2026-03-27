@@ -1,0 +1,59 @@
+{
+  "skill_name": "review",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/review 1443",
+      "description": "後方互換: 全観点・PRスコープ・Codex自動検出",
+      "expected_output": "全5観点でPR差分をレビューし、観点別テーブル（Perspective x Severity）付きサマリーをPR Reviewとして投稿する。Codexが利用可能なら自動起動。detected-by タグはCodex未使用時は省略。"
+    },
+    {
+      "id": 2,
+      "prompt": "/review 1443 --perspective security",
+      "description": "単一観点の絞り込み",
+      "expected_output": "セキュリティ観点のみでレビュー。perspective-security.md のチェックリストを適用し、他の観点はスキップ。Review ResultテーブルにはSecurityの行のみ。"
+    },
+    {
+      "id": 3,
+      "prompt": "/review 1443 --perspective architecture,security",
+      "description": "複数観点の絞り込み",
+      "expected_output": "アーキテクチャとセキュリティの2観点のみでレビュー。Review Resultテーブルにも2行のみ表示。"
+    },
+    {
+      "id": 4,
+      "prompt": "/review --scope project --perspective security",
+      "description": "プロジェクト全体スコープ + 観点絞り込み",
+      "expected_output": "PR差分ではなくプロジェクト全体をセキュリティ観点でスキャン。結果をdocs/reviews/に保存。PRコメントは投稿しない。"
+    },
+    {
+      "id": 5,
+      "prompt": "/review 1443 --codex",
+      "description": "Codex強制実行 + Cross-validation",
+      "expected_output": "Codexをバックグラウンドで起動（codex review - でstdinからプロンプト渡し）。Codexはgit diffでローカルから差分取得（ghコマンドはsandboxで blocked）。Cross-validationセクションに指摘一覧テーブル（Detected by カラム付き）を含むサマリーを投稿。個別コメントに🤝Both/🧠Claude/🤖Codexタグを付与。"
+    },
+    {
+      "id": 6,
+      "prompt": "/review 1443 --scope project",
+      "description": "PR指定 + プロジェクトスコープ",
+      "expected_output": "PR番号は参考情報として使用しつつ、プロジェクト全体を全観点でスキャン。結果をdocs/reviews/に保存。"
+    },
+    {
+      "id": 7,
+      "prompt": "セキュリティレビューして",
+      "description": "自然言語トリガー（security-review代替）",
+      "expected_output": "セキュリティ観点でのレビューとして解釈。現在ブランチにPRがあればPRスコープ、なければプロジェクトスコープで実行。"
+    },
+    {
+      "id": 8,
+      "prompt": "/review 1443 --refactor",
+      "description": "リファクタリング後方互換チェック",
+      "expected_output": "通常の5観点に加えて後方互換チェック（Backward Compat）を実施。公開APIシグネチャ変更、動作の同一性、設定互換、呼び出し元への影響を確認。Review ResultテーブルにBackward Compat行を追加。個別コメントに[Backward Compat]タグ。"
+    },
+    {
+      "id": 9,
+      "prompt": "リファクタリングレビューして",
+      "description": "自然言語トリガー（--refactor）",
+      "expected_output": "--refactor として解釈。後方互換チェックを含むレビューを実施。"
+    }
+  ]
+}

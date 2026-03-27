@@ -1,0 +1,27 @@
+{
+  "project": {
+    "name": "svelte-ssv",
+    "worktreePrefix": "ssv-worktree"
+  },
+  "branches": {
+    "base": "main",
+    "issuePattern": "issue(\\d+)",
+    "branchFormat": "feature/issue{number}/{kebab-summary}"
+  },
+  "docs": {
+    "checklists": [],
+    "architecture": [
+      "CLAUDE.md"
+    ],
+    "bestPractices": [],
+    "testPractices": [],
+    "domainPractices": []
+  },
+  "build": {
+    "formatApply": "",
+    "formatCheck": "",
+    "test": "npm test",
+    "assemble": "npm run build",
+    "fastCommand": "npm run build && npm test"
+  }
+}

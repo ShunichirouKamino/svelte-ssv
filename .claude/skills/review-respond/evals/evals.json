@@ -1,0 +1,41 @@
+{
+  "skill_name": "review-respond",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "/review-respond",
+      "description": "現在ブランチのPRに対するレビュー対応（引数なし）",
+      "expected_output": "現在ブランチのPRを特定し、未対応のレビューコメントを--paginateで全件取得。自分が投稿したコメントは除外。他者からの指摘に対してコード修正→コミット→プッシュ→返信。"
+    },
+    {
+      "id": 2,
+      "prompt": "/review-respond 1443",
+      "description": "PR番号指定でのレビュー対応",
+      "expected_output": "PR #1443のレビューコメントを取得して対応。現在ブランチが対象PRのブランチでなくてもOK。"
+    },
+    {
+      "id": 3,
+      "prompt": "/review-respond（自分が投稿したレビューコメントのみ存在）",
+      "description": "自分のレビュー指摘のみ — 未対応0件",
+      "expected_output": "自分（gh api userで取得したlogin）が投稿した指摘コメントを除外し、他者からの未対応指摘が0件と判定。「未対応の指摘はありません」と報告して終了。"
+    },
+    {
+      "id": 4,
+      "prompt": "/review-respond（Copilot + 自分のレビュー指摘が混在）",
+      "description": "他者指摘と自分の指摘の混在 — 他者分のみ対応",
+      "expected_output": "Copilotなど他者からの指摘のみを未対応として抽出。自分が投稿したレビュー指摘（/reviewスキル経由）は除外。他者指摘に対してのみ修正・返信。"
+    },
+    {
+      "id": 5,
+      "prompt": "/review-respond（30件以上のコメントがあるPR）",
+      "description": "大量コメントPR — pagination対応",
+      "expected_output": "--paginateにより全コメントを取得。ページネーションなしでは後半のコメントが取りこぼされるケースを防止。"
+    },
+    {
+      "id": 6,
+      "prompt": "/review-respond（対応不要な指摘のみ）",
+      "description": "全指摘が対応不要 — 理由を添えて返信",
+      "expected_output": "コード修正なしで「現状維持としました」+理由を各指摘に返信。コミット・プッシュは行わない。"
+    }
+  ]
+}
