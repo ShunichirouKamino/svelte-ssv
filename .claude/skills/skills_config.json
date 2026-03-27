@@ -13,7 +13,9 @@
     "architecture": [
       "CLAUDE.md"
     ],
-    "bestPractices": [],
+    "bestPractices": [
+      ".claude/skills/practices/Best-Practices-SSV.md"
+    ],
     "testPractices": [],
     "domainPractices": []
   },
