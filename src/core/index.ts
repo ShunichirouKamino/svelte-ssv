@@ -27,5 +27,6 @@ export type {
 	FormErrors,
 	FormValidator,
 	ValidationResult,
+	ZodSchema,
 } from "./validator";
 export { createFormValidator } from "./validator";

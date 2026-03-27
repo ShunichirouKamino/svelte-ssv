@@ -1,26 +1,8 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
-	import { z } from "zod";
 	import { createForm } from "@svelte-ssv/core/form";
 	import { createEnhanceHandler } from "@svelte-ssv/core/enhance";
-
-	const registerSchema = z
-		.object({
-			name: z.string().min(1, "Name is required"),
-			email: z
-				.string()
-				.min(1, "Email is required")
-				.email("Invalid email format"),
-			password: z
-				.string()
-				.min(1, "Password is required")
-				.min(8, "Password must be at least 8 characters"),
-			confirmPassword: z.string().min(1, "Please confirm your password"),
-		})
-		.refine((data) => data.password === data.confirmPassword, {
-			message: "Passwords do not match",
-			path: ["confirmPassword"],
-		});
+	import { registerSchema } from "$lib/schemas/register";
 
 	let form = $state(
 		createForm(registerSchema, {

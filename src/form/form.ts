@@ -98,6 +98,18 @@ export type Form<T extends Record<string, unknown>> = {
  * </script>
  * ```
  *
+ * **Important**: Methods (`blur`, `validate`, `reset`) use `this` internally.
+ * Always call them on the form object — do not destructure:
+ *
+ * ```typescript
+ * // ✅ Works
+ * form.blur('name');
+ *
+ * // ❌ Breaks — `this` is lost
+ * const { blur } = form;
+ * blur('name');
+ * ```
+ *
  * @param schema - A Zod schema (any object with a `safeParse` method)
  * @param initial - Initial form data
  * @returns A `Form<T>` object
