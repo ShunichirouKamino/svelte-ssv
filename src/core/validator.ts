@@ -43,7 +43,7 @@ type ZodIssueMinimal = {
  * Minimal interface for a Zod schema with a `safeParse` method.
  * Compatible with both Zod v3 and v4.
  */
-type ZodSchema<T = unknown> = {
+export type ZodSchema<T = unknown> = {
 	safeParse: (
 		data: unknown,
 	) =>

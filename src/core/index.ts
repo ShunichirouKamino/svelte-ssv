@@ -5,6 +5,7 @@
  *
  * This is the core entry point (framework-agnostic).
  * For SvelteKit `use:enhance` integration, import from `@svelte-ssv/core/enhance`.
+ * For unified form state with touched/dirty tracking, import from `@svelte-ssv/core/form`.
  *
  * @example
  * ```typescript

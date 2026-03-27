@@ -1,6 +1,6 @@
 {
 	"name": "@svelte-ssv/core",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"type": "module",
 	"description": "Svelte Simple Validation — A lightweight Zod-based form validation library",
 	"license": "MIT",
@@ -16,28 +16,38 @@
 		"validation",
 		"zod"
 	],
-	"main": "./dist/index.cjs",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
+	"main": "./dist/core/index.cjs",
+	"module": "./dist/core/index.js",
+	"types": "./dist/core/index.d.ts",
 	"exports": {
 		".": {
 			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
+				"types": "./dist/core/index.d.ts",
+				"default": "./dist/core/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.cts",
-				"default": "./dist/index.cjs"
+				"types": "./dist/core/index.d.cts",
+				"default": "./dist/core/index.cjs"
 			}
 		},
 		"./enhance": {
 			"import": {
-				"types": "./dist/enhance.d.ts",
-				"default": "./dist/enhance.js"
+				"types": "./dist/enhance/index.d.ts",
+				"default": "./dist/enhance/index.js"
 			},
 			"require": {
-				"types": "./dist/enhance.d.cts",
-				"default": "./dist/enhance.cjs"
+				"types": "./dist/enhance/index.d.cts",
+				"default": "./dist/enhance/index.cjs"
+			}
+		},
+		"./form": {
+			"import": {
+				"types": "./dist/form/index.d.ts",
+				"default": "./dist/form/index.js"
+			},
+			"require": {
+				"types": "./dist/form/index.d.cts",
+				"default": "./dist/form/index.cjs"
 			}
 		}
 	},

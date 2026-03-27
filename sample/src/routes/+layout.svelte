@@ -9,6 +9,7 @@
 		<a href="/" class="logo">@svelte-ssv/core</a>
 		<div class="links">
 			<a href="/login">Login Form</a>
+			<a href="/register">Register Form</a>
 			<a href="/counter">Counter</a>
 		</div>
 	</nav>
