@@ -14,6 +14,33 @@
 		</p>
 	</a>
 
+	<a href="/register" class="card">
+		<h2>Register Form <span class="badge">v0.3</span></h2>
+		<p>
+			Unified form state with <code>createForm</code> — automatic
+			<strong>touched</strong> / <strong>dirty</strong> tracking, cross-field
+			validation via <code>.refine()</code>, and reset support.
+		</p>
+	</a>
+
+	<a href="/register-toast" class="card">
+		<h2>Register — Toast <span class="badge">v0.3</span></h2>
+		<p>
+			Same <code>createForm</code> API, but errors appear as
+			<strong>toast notifications</strong> in the top-right corner
+			instead of inline text.
+		</p>
+	</a>
+
+	<a href="/register-summary" class="card">
+		<h2>Register — Summary <span class="badge">v0.3</span></h2>
+		<p>
+			Errors are collected in a <strong>summary box at the top</strong>
+			of the form with click-to-scroll links. Follows the GOV.UK
+			accessibility pattern.
+		</p>
+	</a>
+
 	<a href="/counter" class="card">
 		<h2>Counter</h2>
 		<p>
@@ -65,5 +92,15 @@
 		font-size: 0.9rem;
 		color: var(--color-text-muted);
 		line-height: 1.5;
+	}
+
+	.badge {
+		font-size: 0.7rem;
+		font-weight: 600;
+		background: var(--color-primary);
+		color: white;
+		padding: 0.1rem 0.4rem;
+		border-radius: 4px;
+		vertical-align: middle;
 	}
 </style>

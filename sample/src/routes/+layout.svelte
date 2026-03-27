@@ -8,7 +8,10 @@
 	<nav>
 		<a href="/" class="logo">@svelte-ssv/core</a>
 		<div class="links">
-			<a href="/login">Login Form</a>
+			<a href="/login">Login</a>
+			<a href="/register">Register</a>
+			<a href="/register-toast">Toast</a>
+			<a href="/register-summary">Summary</a>
 			<a href="/counter">Counter</a>
 		</div>
 	</nav>

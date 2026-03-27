@@ -33,7 +33,7 @@
  * ```
  */
 
-import type { FormErrors, FormValidator } from "./validator";
+import type { FormErrors, FormValidator } from "../core/validator";
 
 /**
  * Options for `createEnhanceHandler`.

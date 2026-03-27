@@ -2,7 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createEnhanceHandler } from "./enhance";
-import { createFormValidator } from "./validator";
+import { createFormValidator } from "../core/validator";
 
 const testSchema = z.object({
 	name: z.string().min(1, "Name is required"),
