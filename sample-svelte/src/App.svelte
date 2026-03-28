@@ -1,8 +1,20 @@
 <script lang="ts">
 	import LoginForm from "./components/LoginForm.svelte";
 	import Counter from "./components/Counter.svelte";
+	import RegisterForm from "./components/RegisterForm.svelte";
+	import RegisterToast from "./components/RegisterToast.svelte";
+	import RegisterSummary from "./components/RegisterSummary.svelte";
 
-	let currentPage = $state<"login" | "counter">("login");
+	type Page = "login" | "register" | "toast" | "summary" | "counter";
+	let currentPage = $state<Page>("login");
+
+	const pages: { id: Page; label: string }[] = [
+		{ id: "login", label: "Login" },
+		{ id: "register", label: "Register" },
+		{ id: "toast", label: "Toast" },
+		{ id: "summary", label: "Summary" },
+		{ id: "counter", label: "Counter" },
+	];
 </script>
 
 <div class="app">
@@ -11,12 +23,11 @@
 			<span class="logo">@svelte-ssv/core</span>
 			<span class="badge">Svelte only (no SvelteKit)</span>
 			<div class="links">
-				<button class:active={currentPage === "login"} onclick={() => (currentPage = "login")}>
-					Login Form
-				</button>
-				<button class:active={currentPage === "counter"} onclick={() => (currentPage = "counter")}>
-					Counter
-				</button>
+				{#each pages as page}
+					<button class:active={currentPage === page.id} onclick={() => (currentPage = page.id)}>
+						{page.label}
+					</button>
+				{/each}
 			</div>
 		</nav>
 	</header>
@@ -24,6 +35,12 @@
 	<main>
 		{#if currentPage === "login"}
 			<LoginForm />
+		{:else if currentPage === "register"}
+			<RegisterForm />
+		{:else if currentPage === "toast"}
+			<RegisterToast />
+		{:else if currentPage === "summary"}
+			<RegisterSummary />
 		{:else}
 			<Counter />
 		{/if}
@@ -62,6 +79,7 @@
 		align-items: center;
 		gap: 1rem;
 		height: 56px;
+		flex-wrap: wrap;
 	}
 
 	.logo {
