@@ -212,6 +212,11 @@ function createValidateFn<T>(
 	if (isStandardSchema(schema)) {
 		return (data: unknown) => {
 			const result = schema["~standard"].validate(data);
+			if (result instanceof Promise) {
+				throw new Error(
+					"ssv does not support async validation. Use a synchronous schema.",
+				);
+			}
 			if ("value" in result) {
 				return { ok: true, data: result.value };
 			}
@@ -287,7 +292,11 @@ export function createFormValidator<T extends Record<string, unknown>>(
 		const errors: FormErrors<T> = {} as FormErrors<T>;
 		for (const issue of issues) {
 			const firstSegment = issue.path?.[0];
-			if (firstSegment == null) continue;
+			if (firstSegment == null) {
+				if (!errors._form) errors._form = [];
+				errors._form.push(issue.message);
+				continue;
+			}
 			const field = resolvePathSegment(firstSegment) as keyof T | undefined;
 			if (field) {
 				const fieldErrors = errors[field];

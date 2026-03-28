@@ -201,11 +201,18 @@ describe("createFormValidator", () => {
 			expect(errors.name).toEqual(["Error 1", "Error 2"]);
 		});
 
-		it("ignores issues with an empty path", () => {
+		it("maps pathless issues to _form", () => {
 			const errors = validator.parseErrors([
 				{ path: [], message: "Root error" },
 			]);
-			expect(errors).toEqual({});
+			expect(errors._form).toEqual(["Root error"]);
+		});
+
+		it("maps issues with undefined path to _form", () => {
+			const errors = validator.parseErrors([
+				{ message: "Form-level error" },
+			]);
+			expect(errors._form).toEqual(["Form-level error"]);
 		});
 
 		it("handles Standard Schema path segments with key objects", () => {
