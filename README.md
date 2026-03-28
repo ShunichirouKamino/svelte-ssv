@@ -6,10 +6,75 @@
 
 Svelte 5's `$state`, `bind:value`, and SvelteKit's `use:enhance` already cover 90% of form management that React developers need react-hook-form for. The one missing piece is converting validation errors into field-indexed errors — and that's exactly what ssv does, as a lightweight utility.
 
+### Zod direct vs ssv
+
+With Zod alone, handling blur-time field validation requires manual issue filtering, immutable merging, and touched/dirty state management:
+
+```typescript
+// ❌ Zod direct: blur handler for a single field
+function handleBlur(field) {
+  touched[field] = true;
+  dirty[field] = formData[field] !== initial[field];
+  const result = schema.safeParse(formData);
+  if (result.success) {
+    errors = { ...errors };
+    delete errors[field];
+  } else {
+    const fieldIssues = result.error.issues.filter(i => i.path[0] === field);
+    errors = { ...errors };
+    if (fieldIssues.length > 0) {
+      errors[field] = fieldIssues.map(i => i.message);
+    } else {
+      delete errors[field];
+    }
+  }
+}
+```
+
+With ssv's `createForm`, the same behavior is a single line:
+
+```svelte
+<script>
+  import { createForm } from '@svelte-ssv/core/form';
+  import { z } from 'zod';
+
+  const schema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email format'),
+  });
+
+  let form = $state(createForm(schema, { name: '', email: '' }));
+</script>
+
+<!-- ✅ ssv: blur, touched, dirty, errors — all handled -->
+<input bind:value={form.data.name} onblur={() => form.blur('name')} />
+{#if form.touched.name && form.errors.name}
+  <p class="error">{form.errors.name[0]}</p>
+{/if}
+
+{#if form.isDirty}
+  <p>You have unsaved changes.</p>
+{/if}
+<button onclick={() => form.reset()} disabled={!form.isDirty}>Reset</button>
+```
+
+### What ssv covers
+
+| Concern | Zod direct | ssv |
+|---------|-----------|-----|
+| Full form validation → field errors | Manual issue-to-field conversion | `validate()` |
+| **Per-field validation on blur** | Full `safeParse` + manual filtering (`.refine()` breaks with `.pick()`) | `validateField()` |
+| **Immutable error merging** | Spread + delete boilerplate each time | `mergeFieldErrors()` |
+| Server error formatting | Build `{ _form: [msg] }` manually | `setServerError()` |
+| **Touched / dirty tracking** | Multiple `$state` declarations + manual blur handler | Built into `createForm()` |
+| **SvelteKit `use:enhance` integration** | cancel/update/result.type branching each form | `createEnhanceHandler()` |
+
+### Features
+
 - **Validation-library agnostic** — Works with Zod, Valibot, ArkType, TypeBox, or any [Standard Schema V1](https://github.com/standard-schema/standard-schema) library
 - **Framework-agnostic core** — `createFormValidator` is pure TypeScript with zero framework dependencies
+- **Unified form state** — `createForm` bundles data, errors, touched, dirty, and isDirty into one reactive object
 - **SvelteKit integration** — Optional `@svelte-ssv/core/enhance` reduces `use:enhance` boilerplate to a single attribute
-- **Unified form state** — Optional `@svelte-ssv/core/form` provides `createForm` with touched/dirty tracking
 - **Tiny** — ~3 KB source, no runtime dependencies
 
 ## Supported Validation Libraries
@@ -77,7 +142,45 @@ const schema = type({
 const validator = createFormValidator(schema);
 ```
 
-### SvelteKit Form with Real-time Validation
+### Unified Form State with `createForm`
+
+```svelte
+<script>
+  import { createForm } from '@svelte-ssv/core/form';
+  import { z } from 'zod';
+
+  const schema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email format'),
+  });
+
+  let form = $state(createForm(schema, { name: '', email: '' }));
+
+  function handleSubmit(e) {
+    e.preventDefault();
+    const result = form.validate();  // marks all fields touched
+    if (!result.valid) return;
+    // submit result.data
+  }
+</script>
+
+<form onsubmit={handleSubmit} novalidate>
+  <input bind:value={form.data.name} onblur={() => form.blur('name')} />
+  {#if form.touched.name && form.errors.name}
+    <p class="error">{form.errors.name[0]}</p>
+  {/if}
+
+  <input bind:value={form.data.email} onblur={() => form.blur('email')} />
+  {#if form.touched.email && form.errors.email}
+    <p class="error">{form.errors.email[0]}</p>
+  {/if}
+
+  <button type="submit">Submit</button>
+  <button type="button" onclick={() => form.reset()} disabled={!form.isDirty}>Reset</button>
+</form>
+```
+
+### SvelteKit Form with `use:enhance`
 
 ```svelte
 <script>
@@ -143,8 +246,15 @@ Creates a unified form state with touched/dirty tracking. Wrap in `$state()` for
 import { createForm } from '@svelte-ssv/core/form';
 let form = $state(createForm(schema, { name: '', email: '' }));
 
-// form.data, form.errors, form.touched, form.dirty, form.isDirty
-// form.blur(field), form.validate(), form.reset()
+// form.data       — current form data (mutable, bind-friendly)
+// form.errors     — current validation errors
+// form.touched    — per-field touched state (set on blur)
+// form.dirty      — per-field dirty state (differs from initial)
+// form.isDirty    — true if any field is dirty
+// form.validator  — the underlying FormValidator
+// form.blur(field)    — mark touched + validate field
+// form.validate()     — validate all + mark all touched
+// form.reset()        — restore initial state
 ```
 
 ### `@svelte-ssv/core/enhance` — SvelteKit Helper
