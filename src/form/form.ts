@@ -30,8 +30,8 @@
 import type {
 	FormErrors,
 	FormValidator,
+	SchemaInput,
 	ValidationResult,
-	ZodSchema,
 } from "../core/validator";
 import { createFormValidator } from "../core/validator";
 
@@ -115,7 +115,7 @@ export type Form<T extends Record<string, unknown>> = {
  * @returns A `Form<T>` object
  */
 export function createForm<T extends Record<string, unknown>>(
-	schema: ZodSchema<T>,
+	schema: SchemaInput<T>,
 	initial: T,
 ): Form<T> {
 	const _validator = createFormValidator(schema);

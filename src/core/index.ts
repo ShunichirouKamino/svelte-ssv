@@ -1,7 +1,10 @@
 /**
  * @module @svelte-ssv/core
  *
- * Svelte Simple Validation — A lightweight form validation library built on Zod.
+ * Svelte Simple Validation — A lightweight, validation-library agnostic form validation utility.
+ *
+ * Supports any schema implementing Standard Schema V1 (Zod v4, Valibot, ArkType, TypeBox)
+ * or Zod's `safeParse` interface (Zod v3/v4).
  *
  * This is the core entry point (framework-agnostic).
  * For SvelteKit `use:enhance` integration, import from `@svelte-ssv/core/enhance`.
@@ -26,6 +29,8 @@ export type {
 	FieldValidationResult,
 	FormErrors,
 	FormValidator,
+	SchemaInput,
+	StandardSchema,
 	ValidationResult,
 	ZodSchema,
 } from "./validator";

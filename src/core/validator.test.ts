@@ -184,32 +184,35 @@ describe("createFormValidator", () => {
 	// ---------------------------------------------------------------
 
 	describe("parseErrors", () => {
-		it("converts Zod errors into field-indexed errors", () => {
-			const errors = validator.parseErrors({
-				issues: [
-					{ path: ["name"], message: "Required" },
-					{ path: ["email"], message: "Invalid" },
-				],
-			});
+		it("converts issues into field-indexed errors", () => {
+			const errors = validator.parseErrors([
+				{ path: ["name"], message: "Required" },
+				{ path: ["email"], message: "Invalid" },
+			]);
 			expect(errors.name).toEqual(["Required"]);
 			expect(errors.email).toEqual(["Invalid"]);
 		});
 
 		it("groups multiple errors for the same field into an array", () => {
-			const errors = validator.parseErrors({
-				issues: [
-					{ path: ["name"], message: "Error 1" },
-					{ path: ["name"], message: "Error 2" },
-				],
-			});
+			const errors = validator.parseErrors([
+				{ path: ["name"], message: "Error 1" },
+				{ path: ["name"], message: "Error 2" },
+			]);
 			expect(errors.name).toEqual(["Error 1", "Error 2"]);
 		});
 
 		it("ignores issues with an empty path", () => {
-			const errors = validator.parseErrors({
-				issues: [{ path: [], message: "Root error" }],
-			});
+			const errors = validator.parseErrors([
+				{ path: [], message: "Root error" },
+			]);
 			expect(errors).toEqual({});
+		});
+
+		it("handles Standard Schema path segments with key objects", () => {
+			const errors = validator.parseErrors([
+				{ path: [{ key: "name" }], message: "Required" },
+			]);
+			expect(errors.name).toEqual(["Required"]);
 		});
 	});
 });
@@ -246,5 +249,100 @@ describe("cross-field validation", () => {
 			confirmPassword: "different",
 		});
 		expect(result.errors.confirmPassword).toContain("Passwords do not match");
+	});
+});
+
+// ---------------------------------------------------------------
+// Standard Schema V1 support
+// ---------------------------------------------------------------
+
+describe("Standard Schema V1", () => {
+	// Mock Standard Schema that mimics a simple object validator
+	function createMockStandardSchema() {
+		return {
+			"~standard": {
+				version: 1 as const,
+				vendor: "test",
+				validate: (value: unknown) => {
+					const data = value as Record<string, unknown>;
+					const issues: { message: string; path: PropertyKey[] }[] = [];
+
+					if (!data.name || (data.name as string).length === 0) {
+						issues.push({ message: "Name is required", path: ["name"] });
+					}
+					if (!data.email || !(data.email as string).includes("@")) {
+						issues.push({ message: "Invalid email", path: ["email"] });
+					}
+
+					if (issues.length > 0) {
+						return { issues };
+					}
+					return { value: data as { name: string; email: string } };
+				},
+			},
+		};
+	}
+
+	const schema = createMockStandardSchema();
+	const validator = createFormValidator(schema);
+
+	it("validates successfully with Standard Schema", () => {
+		const result = validator.validate({ name: "Taro", email: "a@b.com" });
+		expect(result.valid).toBe(true);
+		if (result.valid) {
+			expect(result.data.name).toBe("Taro");
+		}
+	});
+
+	it("returns field errors with Standard Schema", () => {
+		const result = validator.validate({ name: "", email: "bad" });
+		expect(result.valid).toBe(false);
+		expect(result.errors.name).toContain("Name is required");
+		expect(result.errors.email).toContain("Invalid email");
+	});
+
+	it("validateField works with Standard Schema", () => {
+		const result = validator.validateField("email", {
+			name: "Taro",
+			email: "bad",
+		});
+		expect(result.errors.email).toContain("Invalid email");
+		expect(result.errors.name).toBeUndefined();
+	});
+
+	it("handles Standard Schema with key-object path segments", () => {
+		const schemaWithKeyPaths = {
+			"~standard": {
+				version: 1 as const,
+				vendor: "test",
+				validate: (value: unknown) => {
+					const data = value as Record<string, unknown>;
+					if (!data.name) {
+						return {
+							issues: [
+								{ message: "Required", path: [{ key: "name" }] },
+							],
+						};
+					}
+					return { value: data as { name: string } };
+				},
+			},
+		};
+
+		const v = createFormValidator(schemaWithKeyPaths);
+		const result = v.validate({ name: "" });
+		expect(result.valid).toBe(false);
+		expect(result.errors.name).toContain("Required");
+	});
+
+	it("mergeFieldErrors works with Standard Schema validator", () => {
+		const current = { name: ["Name is required"] };
+		const fieldResult = validator.validateField("email", {
+			name: "",
+			email: "bad",
+		});
+		const merged = validator.mergeFieldErrors(current, "email", fieldResult);
+		expect(merged.name).toEqual(["Name is required"]);
+		expect(merged.email).toContain("Invalid email");
 	});
 });
