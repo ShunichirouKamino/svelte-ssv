@@ -214,6 +214,17 @@ describe("createFormValidator", () => {
 			]);
 			expect(errors.name).toEqual(["Required"]);
 		});
+
+		it("accepts legacy { issues } wrapper for backward compatibility", () => {
+			const errors = validator.parseErrors({
+				issues: [
+					{ path: ["name"], message: "Required" },
+					{ path: ["email"], message: "Invalid" },
+				],
+			});
+			expect(errors.name).toEqual(["Required"]);
+			expect(errors.email).toEqual(["Invalid"]);
+		});
 	});
 });
 

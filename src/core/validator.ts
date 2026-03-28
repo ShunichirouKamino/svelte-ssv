@@ -152,8 +152,17 @@ export type FormValidator<T extends Record<string, unknown>> = {
 		data: Record<string, unknown>,
 	) => FieldValidationResult<T>;
 
-	/** Convert validation issues into field-indexed FormErrors */
-	parseErrors: (issues: readonly StandardIssue[]) => FormErrors<T>;
+	/**
+	 * Convert validation issues into field-indexed FormErrors.
+	 *
+	 * Accepts either a flat array of issues (Standard Schema style) or
+	 * an object with an `issues` property (Zod error style) for backward compatibility.
+	 */
+	parseErrors: (
+		issuesOrError:
+			| readonly StandardIssue[]
+			| { issues: readonly StandardIssue[] },
+	) => FormErrors<T>;
 
 	/** Create a form-level error from a server error message */
 	setServerError: (message: string) => FormErrors<T>;
@@ -182,8 +191,10 @@ function isStandardSchema<T>(schema: SchemaInput<T>): schema is StandardSchema<T
  * Extract the field name (string) from a Standard Schema path segment.
  */
 function resolvePathSegment(segment: StandardPathSegment): string | undefined {
+	if (typeof segment === "symbol") return undefined;
 	if (typeof segment === "object" && segment !== null && "key" in segment) {
-		return segment.key?.toString();
+		const key = segment.key;
+		return typeof key === "symbol" ? undefined : key?.toString();
 	}
 	return segment?.toString();
 }
@@ -265,7 +276,14 @@ export function createFormValidator<T extends Record<string, unknown>>(
 ): FormValidator<T> {
 	const doValidate = createValidateFn(schema);
 
-	function parseErrors(issues: readonly StandardIssue[]): FormErrors<T> {
+	function parseErrors(
+		issuesOrError:
+			| readonly StandardIssue[]
+			| { issues: readonly StandardIssue[] },
+	): FormErrors<T> {
+		const issues = Array.isArray(issuesOrError)
+			? issuesOrError
+			: (issuesOrError as { issues: readonly StandardIssue[] }).issues;
 		const errors: FormErrors<T> = {} as FormErrors<T>;
 		for (const issue of issues) {
 			const firstSegment = issue.path?.[0];
