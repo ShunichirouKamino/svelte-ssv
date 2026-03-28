@@ -1,20 +1,6 @@
 <script lang="ts">
-	import { z } from "zod";
 	import { createForm, type Form } from "@svelte-ssv/core/form";
-
-	const registerSchema = z
-		.object({
-			name: z.string().min(1, "Name is required"),
-			email: z.string().min(1, "Email is required").email("Invalid email format"),
-			password: z.string().min(1, "Password is required").min(8, "Password must be at least 8 characters"),
-			confirmPassword: z.string().min(1, "Please confirm your password"),
-		})
-		.refine((data) => data.password === data.confirmPassword, {
-			message: "Passwords do not match",
-			path: ["confirmPassword"],
-		});
-
-	type RegisterData = z.infer<typeof registerSchema>;
+	import { registerSchema, type RegisterData } from "../lib/schemas/register";
 
 	const fieldLabels: Record<keyof RegisterData, string> = {
 		name: "Name",

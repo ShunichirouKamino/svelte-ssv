@@ -1,16 +1,6 @@
 <script lang="ts">
-	import { z } from "zod";
 	import { createForm, type Form } from "@svelte-ssv/core/form";
-
-	const loginSchema = z.object({
-		email: z.string().min(1, "Email is required").email("Invalid email format"),
-		password: z
-			.string()
-			.min(1, "Password is required")
-			.min(8, "Password must be at least 8 characters"),
-	});
-
-	type LoginData = z.infer<typeof loginSchema>;
+	import { loginSchema, type LoginData } from "../lib/schemas/login";
 
 	let form: Form<LoginData> = $state(
 		createForm(loginSchema, { email: "", password: "" }),
