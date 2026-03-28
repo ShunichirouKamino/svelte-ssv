@@ -45,7 +45,7 @@ const schema = z.object({
 
 const validator = createFormValidator(schema);
 const result = validator.validate({ name: '', email: 'bad' });
-// → { valid: false, errors: { name: ['Name is required'], email: ['Invalid email format'] } }
+// → { valid: false, data: undefined, errors: { name: ['Name is required'], email: ['Invalid email format'] } }
 ```
 
 ### With Valibot
@@ -83,6 +83,12 @@ const validator = createFormValidator(schema);
 <script>
   import { createFormValidator, type FormErrors } from '@svelte-ssv/core';
   import { createEnhanceHandler } from '@svelte-ssv/core/enhance';
+  import { z } from 'zod';
+
+  const schema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email format'),
+  });
 
   const validator = createFormValidator(schema);
   let formData = $state({ name: '', email: '' });

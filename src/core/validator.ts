@@ -16,8 +16,8 @@
  * import { type } from 'arktype';  // or ArkType
  *
  * // All of these work:
- * const validator = createFormValidator(z.object({ name: z.string() }));
- * const validator = createFormValidator(v.object({ name: v.string() }));
+ * const zodValidator = createFormValidator(z.object({ name: z.string() }));
+ * const valibotValidator = createFormValidator(v.object({ name: v.string() }));
  * ```
  */
 
