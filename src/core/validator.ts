@@ -217,10 +217,25 @@ function createValidateFn<T>(
 					"ssv does not support async validation. Use a synchronous schema.",
 				);
 			}
-			if ("value" in result) {
-				return { ok: true, data: result.value };
+			// Check issues first: some libraries (e.g., Valibot) return both
+			// `value` and `issues` on failure. Issues take precedence.
+			if ("issues" in result && result.issues && (result.issues as readonly StandardIssue[]).length > 0) {
+				return { ok: false, issues: result.issues as readonly StandardIssue[] };
 			}
-			return { ok: false, issues: result.issues };
+			if ("value" in result) {
+				return { ok: true, data: result.value as T };
+			}
+			// ArkType may return an array-like object directly
+			if (Array.isArray(result)) {
+				return {
+					ok: false,
+					issues: (result as Array<{ message: string; path?: PropertyKey[] }>).map((issue) => ({
+						message: issue.message,
+						path: issue.path,
+					})),
+				};
+			}
+			return { ok: true, data: result as T };
 		};
 	}
 
