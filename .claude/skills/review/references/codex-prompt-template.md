@@ -6,31 +6,33 @@ Codex に渡すプロンプトのテンプレート。
 ## PR スコープ用テンプレート
 
 ```
-You are reviewing Pull Request #{PR_NUMBER} in the following project:
-{PROJECT_DESCRIPTION}
+Review this pull request (#{PR_NUMBER}) against origin/{BASE_BRANCH}.
+Project: {PROJECT_DESCRIPTION}
 
-The PR branch is: {HEAD_BRANCH}
+Focus on: {PERSPECTIVES}
 
-First, retrieve the PR diff by running this command (use git, NOT gh, since gh requires network access which is blocked in sandbox):
-git diff origin/{BASE_BRANCH}...origin/{HEAD_BRANCH}
+Use git diff origin/{BASE_BRANCH}...HEAD as the review basis.
+You may also read source files with cat to understand full context.
+Do not modify files or run commands that require network.
 
-Then review the diff and report findings organized by perspective.
-You may also read relevant source files with `cat` or `git show` commands to understand the full context.
-Do NOT use `gh` commands — they require network access and will be blocked by sandbox policy.
+Return findings in this format:
 
-Perspectives to check:
-{PERSPECTIVES}
+1) blocking issues (Must Fix)
+2) non-blocking issues (Should Fix)
+3) suggested improvements (Suggestion)
+4) overall summary
 
-For each finding, report in the following format (do NOT try to post comments via gh api — Claude will handle that):
+For each finding include:
 - Perspective: (architecture|security|performance|reliability|maintainability)
-- Severity: (must|recommend|suggest)
+- Severity: (Must Fix|Should Fix|Suggestion)
 - File: path/to/file
 - Line: line number
 - Title: short description
 - Issue: what the problem is
 - Fix: how to fix it
 
-If the diff is too large, focus on the most critical files first.
+If the diff is too large, focus on the most critical source files first.
+Skip package-lock.json and dist/ files.
 ```
 
 ## プロジェクトスコープ用テンプレート
@@ -40,8 +42,8 @@ You are performing a full project review of the following project:
 {PROJECT_DESCRIPTION}
 
 Scan the codebase and report findings organized by perspective.
-Do NOT use `gh` commands — they require network access and will be blocked by sandbox policy.
-Use `cat`, `git show`, or `find` to read files.
+Do not modify files or run commands that require network.
+Use `cat` or `find` to read files.
 
 Perspectives to check:
 {PERSPECTIVES}

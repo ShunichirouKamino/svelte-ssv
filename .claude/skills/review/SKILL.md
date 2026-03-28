@@ -131,12 +131,12 @@ Load the prompt template from `references/codex-prompt-template.md`, substitute 
 **Important**: The diff is NOT passed directly to Codex. Codex retrieves the diff itself using `git diff` commands and reads source files as needed. This avoids ARG_MAX limits and allows Codex to autonomously explore context.
 
 > **Sandbox constraint**: Codex runs in a `read-only` sandbox by default, so `gh` CLI (network access) is blocked.
-> Templates should only instruct local commands such as `git diff` / `cat` / `git show`. Codex findings are collected
+> Templates should only instruct local commands such as `git diff` / `cat`. Codex findings are collected
 > by Claude and posted as a PR Review.
 
-> **Command selection**: Use the `codex review -` subcommand. `codex --full-auto` requires a TTY, so it fails with
-> `stdin is not a terminal` when launched from Claude Code's Bash tool (no TTY).
-> `codex review -` reads the prompt from stdin and does not require a TTY.
+> **Command selection**: Use `codex` directly with the prompt as argument. Do NOT use `codex review -` (stdin-based)
+> or `codex --full-auto` (requires TTY). Both are unreliable when launched from Claude Code's Bash tool.
+> Instead, pass the prompt directly as a quoted string argument to `codex`.
 
 **For PR scope:**
 
@@ -145,18 +145,19 @@ Load the prompt template from `references/codex-prompt-template.md`, substitute 
 HEAD_BRANCH=$(gh pr view <pr-number> --json headRefName -q '.headRefName')
 BASE_BRANCH=$(gh pr view <pr-number> --json baseRefName -q '.baseRefName')
 
-# 2. Fetch remote branches (so Codex can run git diff)
-git fetch origin "$HEAD_BRANCH" "$BASE_BRANCH"
+# 2. Fetch remote branches and check out PR head locally
+git fetch origin "$BASE_BRANCH"
+git fetch origin "pull/<pr-number>/head:pr-<pr-number>"
+git checkout "pr-<pr-number>"
 
-# 3. Substitute template variables and create prompt file via bash heredoc
-#    File path: /tmp/codex-prompt-<pr-number>.txt
+# 3. Substitute template variables into the prompt string
 #    Variables: {PR_NUMBER}, {HEAD_BRANCH}, {BASE_BRANCH}, {PROJECT_DESCRIPTION}, {PERSPECTIVES}
 
-# 4. Launch Codex (pass prompt via stdin)
-cat /tmp/codex-prompt-<pr-number>.txt | codex review -
+# 4. Launch Codex with the prompt as argument
+codex --sandbox read-only --ask-for-approval never "<substituted prompt>"
 
-# 5. Delete temporary file
-rm /tmp/codex-prompt-<pr-number>.txt
+# 5. After Codex completes, return to the original branch
+git checkout -
 ```
 
 **For project scope:**
@@ -164,7 +165,7 @@ rm /tmp/codex-prompt-<pr-number>.txt
 ```bash
 REVIEW_DIR="<projectScope.outputDir>"
 mkdir -p "$REVIEW_DIR"
-cat /tmp/codex-prompt.txt | codex review -
+codex --sandbox read-only --ask-for-approval never "<substituted prompt>"
 ```
 
 Launch using the Bash tool with `run_in_background: true` to run in parallel with Claude's review.
