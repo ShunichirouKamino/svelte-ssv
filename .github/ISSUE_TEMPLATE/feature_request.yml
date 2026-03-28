@@ -1,0 +1,58 @@
+name: Feature Request
+description: Suggest a new feature or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe what you'd like and why.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or motivation
+      description: What problem does this feature solve? Is it related to a frustration?
+      placeholder: "I often find myself writing boilerplate for..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: Describe the API or behavior you'd like to see.
+      placeholder: |
+        ```typescript
+        // Example of the API you'd like:
+        const result = validator.someNewMethod(...);
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Have you considered any workarounds or alternative approaches?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: subpath
+    attributes:
+      label: Related subpath
+      options:
+        - "@svelte-ssv/core (core validator)"
+        - "@svelte-ssv/core/form (createForm)"
+        - "@svelte-ssv/core/enhance (createEnhanceHandler)"
+        - "New subpath / other"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Any other context, mockups, or references.
+    validations:
+      required: false

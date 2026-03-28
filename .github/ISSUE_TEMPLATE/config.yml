@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: npm package
+    url: https://www.npmjs.com/package/@svelte-ssv/core
+    about: View the package on npm

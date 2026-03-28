@@ -1,0 +1,85 @@
+name: Bug Report
+description: Report a bug or unexpected behavior
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the information below to help us investigate.
+
+  - type: input
+    id: version
+    attributes:
+      label: "@svelte-ssv/core version"
+      placeholder: "e.g., 0.2.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: subpath
+    attributes:
+      label: Affected subpath
+      options:
+        - "@svelte-ssv/core (core validator)"
+        - "@svelte-ssv/core/form (createForm)"
+        - "@svelte-ssv/core/enhance (createEnhanceHandler)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps or code to reproduce the issue.
+      placeholder: |
+        1. Create a form with schema `z.object({ ... })`
+        2. Call `validator.validate({ ... })`
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: What actually happened (include error messages if any).
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Relevant version info.
+      placeholder: |
+        - Svelte: 5.x.x
+        - SvelteKit: 2.x.x (if applicable)
+        - Zod: 4.x.x
+        - Node.js: 22.x.x
+        - OS: macOS / Linux / Windows
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Any other context, screenshots, or relevant info.
+    validations:
+      required: false

@@ -1,0 +1,39 @@
+name: Question
+description: Ask a question about usage or behavior
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're happy to help. Please provide as much context as possible.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What would you like to know?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to achieve? Include relevant code if applicable.
+      placeholder: |
+        I'm trying to use `createForm` with a nested Zod schema like:
+        ```typescript
+        const schema = z.object({
+          address: z.object({ ... }),
+        });
+        ```
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: "@svelte-ssv/core version"
+      placeholder: "e.g., 0.2.1"
+    validations:
+      required: false

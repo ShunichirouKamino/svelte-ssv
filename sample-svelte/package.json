@@ -1,0 +1,21 @@
+{
+	"name": "@svelte-ssv/sample-svelte",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"@svelte-ssv/core": "file:..",
+		"zod": "^4.3.6"
+	},
+	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "^5.0.0",
+		"svelte": "^5.0.0",
+		"typescript": "^5.8.0",
+		"vite": "^6.3.0"
+	}
+}
