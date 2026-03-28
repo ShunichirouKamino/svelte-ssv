@@ -197,3 +197,98 @@ const result = schema.safeParse(data);  // ← full form data, not just one fiel
 ```
 
 **Review check**: Never "optimize" `validateField` to parse only the single field (e.g., via `schema.pick()`). This would break `.refine()` validations.
+
+---
+
+## 11. Standard Schema V1 — Implementation Pitfalls
+
+**Rule**: Never trust the Standard Schema V1 spec alone. Always verify against real library output.
+
+The spec defines a clean interface (`{ value }` on success, `{ issues }` on failure), but real libraries deviate:
+
+### Response format differences
+
+| Library | Success | Failure | Spec-compliant |
+|---------|---------|---------|:-:|
+| Zod v4 | `{ value }` | `{ issues }` | ✅ |
+| Valibot v1 | `{ value }` | `{ value, issues }` (both) | ❌ |
+| ArkType | `{ value }` | `[issue, issue, ...]` (raw array) | ❌ |
+
+### Detection order matters
+
+```typescript
+// ❌ Wrong: "value" check first → Valibot failures treated as success
+if ("value" in result) { return success; }
+
+// ✅ Correct: check issues first, then value, then array fallback
+if ("issues" in result && result.issues?.length > 0) { return failure; }
+if ("value" in result) { return success; }
+if (Array.isArray(result)) { return failure; }  // ArkType
+```
+
+### Pathless issues map to `_form`
+
+Standard Schema issues may have `path: undefined` or `path: []` for form-level / cross-field errors. These must be collected into `_form`, not silently dropped.
+
+### Async validation guard
+
+Standard Schema `validate` may return a `Promise`. ssv is sync-only, so an `instanceof Promise` runtime check is required to fail fast with a clear error message instead of silently treating the Promise object as valid data.
+
+### Path segments can be objects
+
+Standard Schema path segments can be `PropertyKey` or `{ key: PropertyKey }`. The `resolvePathSegment` helper handles both formats. `symbol`-typed segments are ignored (form fields are always strings).
+
+**Review check**: Any change to `createValidateFn` or `parseErrors` must be tested against Zod, Valibot, AND ArkType — not just mock Standard Schema implementations.
+
+---
+
+## 12. TypeScript — Type Predicate (`is` keyword)
+
+**Rule**: Use type predicates to preserve narrowing when extracting type checks into functions.
+
+TypeScript automatically narrows types inside `if ("prop" in obj)` blocks, but this narrowing is lost when the check is extracted to a function. The `is` keyword restores it:
+
+```typescript
+// ✅ Type predicate: narrowing preserved after function extraction
+function isStandardSchema<T>(schema: SchemaInput<T>): schema is StandardSchema<T> {
+  return "~standard" in schema;
+}
+
+if (isStandardSchema(schema)) {
+  schema["~standard"].validate(data);  // TypeScript knows schema is StandardSchema<T>
+} else {
+  schema.safeParse(data);              // TypeScript knows schema is ZodSchema<T>
+}
+```
+
+Use type predicates whenever a union type (`A | B`) needs runtime discrimination in a reusable function.
+
+**Review check**: If a new helper function performs type discrimination on `SchemaInput`, `FormErrors`, or similar union types, ensure it uses `is` return type — not plain `boolean`.
+
+---
+
+## 13. Svelte 5 — `$state` Deep Reactivity and Proxies
+
+**Rule**: Understand that `$state` creates a deep reactive Proxy, and library code interacts with the Proxy, not the raw object.
+
+Key implications:
+
+- `$state(createForm(...))` wraps the entire return value in a Proxy
+- Property reads/writes inside methods go through the Proxy (because `this` is the Proxy)
+- `structuredClone()` works on Proxies (Svelte handles this internally)
+- `"prop" in obj` works on Proxies (the `has` trap delegates to the target)
+- `instanceof` does NOT work reliably on Proxied objects — `form instanceof Form` will be `false` even if the underlying object is a Form. Use structural checks (`"~standard" in schema`) instead
+
+Implications for Standard Schema detection:
+
+```typescript
+// ✅ Works through Proxy
+"~standard" in schema   // Proxy's has trap → true
+
+// ❌ Would not work if schema were a class instance behind a Proxy
+schema instanceof StandardSchemaClass
+```
+
+This is why ssv uses `in` operator checks rather than `instanceof` for schema type detection.
+
+**Review check**: Never use `instanceof` to detect schema types or form object types. Always use property-based structural checks.

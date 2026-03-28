@@ -1,15 +1,19 @@
 <script lang="ts">
 	import LoginForm from "./components/LoginForm.svelte";
+	import LoginValibot from "./components/LoginValibot.svelte";
+	import LoginArktype from "./components/LoginArktype.svelte";
 	import Counter from "./components/Counter.svelte";
 	import RegisterForm from "./components/RegisterForm.svelte";
 	import RegisterToast from "./components/RegisterToast.svelte";
 	import RegisterSummary from "./components/RegisterSummary.svelte";
 
-	type Page = "login" | "register" | "toast" | "summary" | "counter";
+	type Page = "login" | "valibot" | "arktype" | "register" | "toast" | "summary" | "counter";
 	let currentPage = $state<Page>("login");
 
 	const pages: { id: Page; label: string }[] = [
-		{ id: "login", label: "Login" },
+		{ id: "login", label: "Login (Zod)" },
+		{ id: "valibot", label: "Valibot" },
+		{ id: "arktype", label: "ArkType" },
 		{ id: "register", label: "Register" },
 		{ id: "toast", label: "Toast" },
 		{ id: "summary", label: "Summary" },
@@ -35,6 +39,10 @@
 	<main>
 		{#if currentPage === "login"}
 			<LoginForm />
+		{:else if currentPage === "valibot"}
+			<LoginValibot />
+		{:else if currentPage === "arktype"}
+			<LoginArktype />
 		{:else if currentPage === "register"}
 			<RegisterForm />
 		{:else if currentPage === "toast"}
