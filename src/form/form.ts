@@ -82,40 +82,6 @@ export type Form<T extends Record<string, unknown>> = {
 	reset: () => void;
 
 	/**
-	 * Build a SvelteKit `use:enhance` handler from this form.
-	 *
-	 * **Must be called after `$state()` wrapping** so that `this` references
-	 * the Proxy, not the raw object.
-	 *
-	 * @example
-	 * ```typescript
-	 * let form = $state(createForm(schema, initial));
-	 * const handleEnhance = form.buildEnhance({ onSuccess: () => closeDialog() });
-	 * ```
-	 */
-	buildEnhance: (options?: {
-		onSuccess?: () => void;
-		// biome-ignore lint/suspicious/noConfusingVoidType: void is needed
-		onBeforeSubmit?: () => boolean | void;
-		onAfterSubmit?: () => void;
-	}) => (input: {
-		cancel: () => void;
-		formData: FormData;
-		formElement: HTMLFormElement;
-		action: URL;
-		submitter: HTMLElement | null;
-		controller: AbortController;
-	}) =>
-		| ((opts: {
-				update: (options?: { reset?: boolean }) => Promise<void>;
-				result: { type: string; status?: number; data?: unknown };
-				formData: FormData;
-				formElement: HTMLFormElement;
-				action: URL;
-		  }) => Promise<void>)
-		| void;
-
-	/**
 	 * Populate form with new data and clear all state.
 	 *
 	 * Unlike `reset()` which restores the initial values, `populate()` sets
@@ -240,79 +206,5 @@ export function createForm<T extends Record<string, unknown>>(
 			this.errors = {} as FormErrors<T>;
 		},
 
-		buildEnhance(opts?: {
-			onSuccess?: () => void;
-			onBeforeSubmit?: () => boolean | void;
-			onAfterSubmit?: () => void;
-		}) {
-			// `this` is the $state Proxy (called as form.buildEnhance())
-			const self = this;
-			return _buildEnhanceHandler(self, _validator, opts);
-		},
-	};
-}
-
-/**
- * Internal helper — builds a SvelteKit use:enhance handler from a form reference.
- * Separated to avoid importing enhance.ts in form.ts (circular dependency prevention).
- */
-function _buildEnhanceHandler<T extends Record<string, unknown>>(
-	form: Form<T>,
-	validator: FormValidator<T>,
-	opts?: {
-		onSuccess?: () => void;
-		onBeforeSubmit?: () => boolean | void;
-		onAfterSubmit?: () => void;
-	},
-) {
-	return (input: {
-		cancel: () => void;
-		formData: FormData;
-		formElement: HTMLFormElement;
-		action: URL;
-		submitter: HTMLElement | null;
-		controller: AbortController;
-	}) => {
-		const { cancel } = input;
-
-		if (opts?.onBeforeSubmit) {
-			const shouldContinue = opts.onBeforeSubmit();
-			if (shouldContinue === false) {
-				cancel();
-				return;
-			}
-		}
-
-		const result = validator.validate(form.data as Record<string, unknown>);
-		if (!result.valid) {
-			const keys = Object.keys(form.data) as (keyof T & string)[];
-			for (const key of keys) {
-				form.touched[key] = true;
-			}
-			form.errors = result.errors;
-			cancel();
-			return;
-		}
-
-		form.errors = {} as FormErrors<T>;
-
-		return async (afterInput: {
-			update: (options?: { reset?: boolean }) => Promise<void>;
-			result: { type: string; status?: number; data?: unknown };
-			formData: FormData;
-			formElement: HTMLFormElement;
-			action: URL;
-		}) => {
-			try {
-				await afterInput.update();
-				if (afterInput.result.type === "success" && opts?.onSuccess) {
-					opts.onSuccess();
-				}
-			} finally {
-				if (opts?.onAfterSubmit) {
-					opts.onAfterSubmit();
-				}
-			}
-		};
 	};
 }

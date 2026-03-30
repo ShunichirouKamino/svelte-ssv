@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { createForm } from "@svelte-ssv/core/form";
+	import { buildEnhanceHandler } from "@svelte-ssv/core/enhance";
 	import { registerSchema } from "$lib/schemas/register";
 
 	let submitted = $state(false);
@@ -14,9 +15,9 @@
 		}),
 	);
 
-	// buildEnhance must be called AFTER $state() wrapping.
-	// form.buildEnhance() uses `this` (the Proxy) to read data.
-	const handleEnhance = form.buildEnhance({
+	// buildEnhanceHandler must be called AFTER $state() wrapping.
+	// It reads form.data through the Proxy to get latest bind:value values.
+	const handleEnhance = buildEnhanceHandler(form, {
 		onSuccess: () => {
 			submitted = true;
 			form.reset();
