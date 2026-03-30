@@ -99,7 +99,7 @@
 				</div>
 
 				<div class="actions">
-					<button type="submit" class="submit-btn" disabled={!form.isDirty}>
+					<button type="submit" class="submit-btn" disabled={editTarget ? !form.isDirty : false}>
 						{editTarget ? "Save Changes" : "Create"}
 					</button>
 					<button type="button" class="reset-btn" onclick={() => form.reset()} disabled={!form.isDirty}>Undo</button>
