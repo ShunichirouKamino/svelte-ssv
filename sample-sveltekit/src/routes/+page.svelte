@@ -15,25 +15,15 @@
 	</a>
 
 	<a href="/register" class="card">
-		<h2>Register Form <span class="badge">v0.3</span></h2>
+		<h2>Register Form</h2>
 		<p>
-			Unified form state with <code>createForm</code> — automatic
-			<strong>touched</strong> / <strong>dirty</strong> tracking, cross-field
-			validation via <code>.refine()</code>, and reset support.
-		</p>
-	</a>
-
-	<a href="/register-v3" class="card">
-		<h2>Register — v0.3.2 <span class="badge">new</span></h2>
-		<p>
-			<code>createEnhanceForm</code> — single call replaces
-			<code>createForm</code> + <code>createEnhanceHandler</code>.
-			Compare with the v0.3 Register page to see the boilerplate reduction.
+			<code>createEnhanceForm</code> — unified form state + <code>use:enhance</code>
+			in a single call. Touched/dirty tracking and cross-field validation.
 		</p>
 	</a>
 
 	<a href="/register-toast" class="card">
-		<h2>Register — Toast <span class="badge">v0.3</span></h2>
+		<h2>Register — Toast</h2>
 		<p>
 			Same <code>createForm</code> API, but errors appear as
 			<strong>toast notifications</strong> in the top-right corner
@@ -42,7 +32,7 @@
 	</a>
 
 	<a href="/register-summary" class="card">
-		<h2>Register — Summary <span class="badge">v0.3</span></h2>
+		<h2>Register — Summary</h2>
 		<p>
 			Errors are collected in a <strong>summary box at the top</strong>
 			of the form with click-to-scroll links. Follows the GOV.UK

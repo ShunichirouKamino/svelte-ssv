@@ -7,8 +7,10 @@
 	import RegisterToast from "./components/RegisterToast.svelte";
 	import RegisterSummary from "./components/RegisterSummary.svelte";
 	import EditUsers from "./components/EditUsers.svelte";
+	import StepForm from "./components/StepForm.svelte";
+	import InlineTable from "./components/InlineTable.svelte";
 
-	type Page = "login" | "valibot" | "arktype" | "register" | "toast" | "summary" | "edit" | "counter";
+	type Page = "login" | "valibot" | "arktype" | "register" | "toast" | "summary" | "edit" | "step" | "inline" | "counter";
 	let currentPage = $state<Page>("login");
 
 	const pages: { id: Page; label: string }[] = [
@@ -19,6 +21,8 @@
 		{ id: "toast", label: "Toast" },
 		{ id: "summary", label: "Summary" },
 		{ id: "edit", label: "Edit" },
+		{ id: "step", label: "Steps" },
+		{ id: "inline", label: "Inline" },
 		{ id: "counter", label: "Counter" },
 	];
 </script>
@@ -53,6 +57,10 @@
 			<RegisterSummary />
 		{:else if currentPage === "edit"}
 			<EditUsers />
+		{:else if currentPage === "step"}
+			<StepForm />
+		{:else if currentPage === "inline"}
+			<InlineTable />
 		{:else}
 			<Counter />
 		{/if}
