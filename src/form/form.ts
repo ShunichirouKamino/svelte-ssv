@@ -27,12 +27,7 @@
  * ```
  */
 
-import type {
-	FormErrors,
-	FormValidator,
-	SchemaInput,
-	ValidationResult,
-} from "../core/validator";
+import type { FormErrors, FormValidator, SchemaInput, ValidationResult } from "../core/validator";
 import { createFormValidator } from "../core/validator";
 
 // ---------------------------------------------------------------------------
@@ -123,10 +118,7 @@ export type Form<T extends Record<string, unknown>> = {
  * @param initial - Initial form data
  * @returns A `Form<T>` object
  */
-export function createForm<T extends Record<string, unknown>>(
-	schema: SchemaInput<T>,
-	initial: T,
-): Form<T> {
+export function createForm<T extends Record<string, unknown>>(schema: SchemaInput<T>, initial: T): Form<T> {
 	const _validator = createFormValidator(schema);
 	const _initialData = structuredClone(initial);
 	const keys = Object.keys(initial) as (keyof T & string)[];
@@ -145,9 +137,7 @@ export function createForm<T extends Record<string, unknown>>(
 		dirty,
 
 		get isDirty(): boolean {
-			return keys.some(
-				(key) => this.data[key] !== _initialData[key],
-			);
+			return keys.some((key) => this.data[key] !== _initialData[key]);
 		},
 
 		get validator(): FormValidator<T> {
@@ -158,10 +148,7 @@ export function createForm<T extends Record<string, unknown>>(
 			this.touched[field] = true;
 			this.dirty[field] = this.data[field] !== _initialData[field];
 
-			const result = _validator.validateField(
-				field,
-				this.data as Record<string, unknown>,
-			);
+			const result = _validator.validateField(field, this.data as Record<string, unknown>);
 			this.errors = _validator.mergeFieldErrors(this.errors, field, result);
 		},
 
@@ -172,21 +159,15 @@ export function createForm<T extends Record<string, unknown>>(
 				this.dirty[key] = this.data[key] !== _initialData[key];
 			}
 
-			const result = _validator.validate(
-				this.data as Record<string, unknown>,
-			);
-			this.errors = result.valid
-				? ({} as FormErrors<T>)
-				: result.errors;
+			const result = _validator.validate(this.data as Record<string, unknown>);
+			this.errors = result.valid ? ({} as FormErrors<T>) : result.errors;
 			return result;
 		},
 
 		reset(): void {
 			const fresh = structuredClone(_initialData);
 			for (const key of keys) {
-				(this.data as Record<string, unknown>)[key] = (
-					fresh as Record<string, unknown>
-				)[key];
+				(this.data as Record<string, unknown>)[key] = (fresh as Record<string, unknown>)[key];
 				this.touched[key] = false;
 				this.dirty[key] = false;
 			}
@@ -205,6 +186,5 @@ export function createForm<T extends Record<string, unknown>>(
 			}
 			this.errors = {} as FormErrors<T>;
 		},
-
 	};
 }

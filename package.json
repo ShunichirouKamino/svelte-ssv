@@ -57,6 +57,8 @@
 	"scripts": {
 		"build": "tsup",
 		"test": "vitest run",
+		"format": "biome format --write .",
+		"format:check": "biome format .",
 		"prepublishOnly": "npm run build && npm test"
 	},
 	"peerDependencies": {
@@ -68,6 +70,7 @@
 		}
 	},
 	"devDependencies": {
+		"@biomejs/biome": "^2.4.9",
 		"jsdom": "^29.0.1",
 		"tsup": "^8.5.1",
 		"typescript": "~5.8.0",

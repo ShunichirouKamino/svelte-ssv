@@ -271,9 +271,7 @@ describe("createForm", () => {
 
 			form.blur("confirmPassword");
 
-			expect(form.errors.confirmPassword).toContain(
-				"Passwords do not match",
-			);
+			expect(form.errors.confirmPassword).toContain("Passwords do not match");
 		});
 
 		it("detects cross-field errors via validate", () => {
@@ -285,9 +283,7 @@ describe("createForm", () => {
 			const result = form.validate();
 
 			expect(result.valid).toBe(false);
-			expect(form.errors.confirmPassword).toContain(
-				"Passwords do not match",
-			);
+			expect(form.errors.confirmPassword).toContain("Passwords do not match");
 		});
 	});
 

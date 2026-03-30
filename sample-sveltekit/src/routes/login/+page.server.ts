@@ -5,10 +5,7 @@ import { createFormValidator } from "@svelte-ssv/core";
 
 const loginSchema = z.object({
 	email: z.string().min(1, "Email is required").email("Invalid email format"),
-	password: z
-		.string()
-		.min(1, "Password is required")
-		.min(8, "Password must be at least 8 characters"),
+	password: z.string().min(1, "Password is required").min(8, "Password must be at least 8 characters"),
 });
 
 const validator = createFormValidator(loginSchema);
@@ -25,7 +22,9 @@ export const actions = {
 
 		// Simulate authentication failure for demo purposes
 		if (result.data.email === "error@example.com") {
-			return fail(500, { errors: validator.setServerError("Authentication service unavailable. Please try again later.") });
+			return fail(500, {
+				errors: validator.setServerError("Authentication service unavailable. Please try again later."),
+			});
 		}
 
 		// Demo always succeeds for other emails

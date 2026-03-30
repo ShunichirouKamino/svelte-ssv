@@ -18,9 +18,7 @@ export const actions = {
 		// Simulate duplicate email for demo purposes
 		if (result.data.email === "taken@example.com") {
 			return fail(409, {
-				errors: validator.setServerError(
-					"This email is already registered.",
-				),
+				errors: validator.setServerError("This email is already registered."),
 			});
 		}
 

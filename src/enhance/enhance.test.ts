@@ -11,9 +11,7 @@ const testSchema = z.object({
 	email: z.string().email("Invalid email format"),
 });
 
-function createMockInput(
-	overrides?: Partial<Parameters<ReturnType<typeof createEnhanceHandler>>[0]>,
-) {
+function createMockInput(overrides?: Partial<Parameters<ReturnType<typeof createEnhanceHandler>>[0]>) {
 	return {
 		cancel: vi.fn(),
 		formData: new FormData(),

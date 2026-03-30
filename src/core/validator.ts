@@ -55,9 +55,7 @@ export type StandardSchema<T = unknown> = {
 	readonly "~standard": {
 		readonly version: 1;
 		readonly vendor: string;
-		readonly validate: (
-			value: unknown,
-		) => { readonly value: T } | { readonly issues: readonly StandardIssue[] };
+		readonly validate: (value: unknown) => { readonly value: T } | { readonly issues: readonly StandardIssue[] };
 	};
 };
 
@@ -68,9 +66,7 @@ export type StandardSchema<T = unknown> = {
  * which does not implement Standard Schema.
  */
 export type ZodSchema<T = unknown> = {
-	safeParse: (
-		data: unknown,
-	) =>
+	safeParse: (data: unknown) =>
 		| { success: true; data: T }
 		| {
 				success: false;
@@ -106,9 +102,7 @@ export type SchemaInput<T = unknown> = StandardSchema<T> | ZodSchema<T>;
  * };
  * ```
  */
-export type FormErrors<
-	T extends Record<string, unknown> = Record<string, unknown>,
-> = {
+export type FormErrors<T extends Record<string, unknown> = Record<string, unknown>> = {
 	[K in keyof T]?: string[];
 } & {
 	/** Form-level errors (not associated with a specific field) */
@@ -147,10 +141,7 @@ export type FormValidator<T extends Record<string, unknown>> = {
 	 * Validates the entire form data and extracts only the errors
 	 * for the specified field. This ensures cross-field validations work correctly.
 	 */
-	validateField: (
-		field: keyof T & string,
-		data: Record<string, unknown>,
-	) => FieldValidationResult<T>;
+	validateField: (field: keyof T & string, data: Record<string, unknown>) => FieldValidationResult<T>;
 
 	/**
 	 * Convert validation issues into field-indexed FormErrors.
@@ -158,11 +149,7 @@ export type FormValidator<T extends Record<string, unknown>> = {
 	 * Accepts either a flat array of issues (Standard Schema style) or
 	 * an object with an `issues` property (Zod error style) for backward compatibility.
 	 */
-	parseErrors: (
-		issuesOrError:
-			| readonly StandardIssue[]
-			| { issues: readonly StandardIssue[] },
-	) => FormErrors<T>;
+	parseErrors: (issuesOrError: readonly StandardIssue[] | { issues: readonly StandardIssue[] }) => FormErrors<T>;
 
 	/** Create a form-level error from a server error message */
 	setServerError: (message: string) => FormErrors<T>;
@@ -204,18 +191,12 @@ function resolvePathSegment(segment: StandardPathSegment): string | undefined {
  */
 function createValidateFn<T>(
 	schema: SchemaInput<T>,
-): (
-	data: unknown,
-) =>
-	| { ok: true; data: T }
-	| { ok: false; issues: readonly StandardIssue[] } {
+): (data: unknown) => { ok: true; data: T } | { ok: false; issues: readonly StandardIssue[] } {
 	if (isStandardSchema(schema)) {
 		return (data: unknown) => {
 			const result = schema["~standard"].validate(data);
 			if (result instanceof Promise) {
-				throw new Error(
-					"ssv does not support async validation. Use a synchronous schema.",
-				);
+				throw new Error("ssv does not support async validation. Use a synchronous schema.");
 			}
 			// Check issues first: some libraries (e.g., Valibot) return both
 			// `value` and `issues` on failure. Issues take precedence.
@@ -291,16 +272,10 @@ function createValidateFn<T>(
  * {/if}
  * ```
  */
-export function createFormValidator<T extends Record<string, unknown>>(
-	schema: SchemaInput<T>,
-): FormValidator<T> {
+export function createFormValidator<T extends Record<string, unknown>>(schema: SchemaInput<T>): FormValidator<T> {
 	const doValidate = createValidateFn(schema);
 
-	function parseErrors(
-		issuesOrError:
-			| readonly StandardIssue[]
-			| { issues: readonly StandardIssue[] },
-	): FormErrors<T> {
+	function parseErrors(issuesOrError: readonly StandardIssue[] | { issues: readonly StandardIssue[] }): FormErrors<T> {
 		const issues = Array.isArray(issuesOrError)
 			? issuesOrError
 			: (issuesOrError as { issues: readonly StandardIssue[] }).issues;
@@ -340,10 +315,7 @@ export function createFormValidator<T extends Record<string, unknown>>(
 		};
 	}
 
-	function validateField(
-		field: keyof T & string,
-		data: Record<string, unknown>,
-	): FieldValidationResult<T> {
+	function validateField(field: keyof T & string, data: Record<string, unknown>): FieldValidationResult<T> {
 		const result = doValidate(data);
 		if (result.ok) {
 			return { errors: {} as FormErrors<T> };

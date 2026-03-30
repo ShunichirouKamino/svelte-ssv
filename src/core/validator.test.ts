@@ -202,23 +202,17 @@ describe("createFormValidator", () => {
 		});
 
 		it("maps pathless issues to _form", () => {
-			const errors = validator.parseErrors([
-				{ path: [], message: "Root error" },
-			]);
+			const errors = validator.parseErrors([{ path: [], message: "Root error" }]);
 			expect(errors._form).toEqual(["Root error"]);
 		});
 
 		it("maps issues with undefined path to _form", () => {
-			const errors = validator.parseErrors([
-				{ message: "Form-level error" },
-			]);
+			const errors = validator.parseErrors([{ message: "Form-level error" }]);
 			expect(errors._form).toEqual(["Form-level error"]);
 		});
 
 		it("handles Standard Schema path segments with key objects", () => {
-			const errors = validator.parseErrors([
-				{ path: [{ key: "name" }], message: "Required" },
-			]);
+			const errors = validator.parseErrors([{ path: [{ key: "name" }], message: "Required" }]);
 			expect(errors.name).toEqual(["Required"]);
 		});
 
@@ -337,9 +331,7 @@ describe("Standard Schema V1", () => {
 					const data = value as Record<string, unknown>;
 					if (!data.name) {
 						return {
-							issues: [
-								{ message: "Required", path: [{ key: "name" }] },
-							],
+							issues: [{ message: "Required", path: [{ key: "name" }] }],
 						};
 					}
 					return { value: data as { name: string } };
