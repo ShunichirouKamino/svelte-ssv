@@ -188,14 +188,20 @@ If all CI checks pass, proceed directly to Phase 6.
 
 ### Phase 6: Reply to Review Comments with Results
 
-After CI passes, **reply to all unresolved review comments** (regardless of whether code was changed).
+After CI passes, **reply to each unresolved review comment individually** (regardless of whether code was changed).
+
+**CRITICAL**: You MUST reply to each review comment using its `in_reply_to` ID so the reply appears as a thread under the original comment. Do NOT post a single summary comment on the PR. Each unresolved comment identified in Phase 1.3 must receive its own individual reply.
+
 To prevent command injection, pass comment bodies via temporary files.
+
+**For each unresolved comment**, repeat the following steps:
 
 ```bash
 # 1. Write the comment body to a temporary file (using the Write tool)
 #    File path: /tmp/review-comment-<N>.md
 
-# 2. Reply to a review comment (for line comments)
+# 2. Reply to the specific review comment using in_reply_to
+#    IMPORTANT: Use the original comment's ID as in_reply_to to create a thread
 gh api repos/<owner>/<repo>/pulls/<pr_number>/comments \
   -X POST \
   -F body=@/tmp/review-comment-<N>.md \
@@ -204,14 +210,19 @@ gh api repos/<owner>/<repo>/pulls/<pr_number>/comments \
   -F line=<line_number> \
   -F in_reply_to=<original_comment_id>
 
-# Or, for PR-level comments
-gh pr comment <pr_number> --body-file /tmp/review-comment-<N>.md
-
 # 3. Delete the temporary file
 rm /tmp/review-comment-<N>.md
 ```
 
+**For review-level comments (no `path`/`line`)**, use issue comment reply:
+
+```bash
+gh pr comment <pr_number> --body-file /tmp/review-comment-<N>.md
+```
+
 #### Comment Reply Format
+
+For comments where code was changed:
 
 ```markdown
 Addressed.
@@ -222,7 +233,7 @@ Addressed.
 **Fix commit:** <short commit SHA>
 ```
 
-For comments that do not require changes, reply with the reason:
+For comments that do not require changes:
 
 ```markdown
 Reviewed, but keeping current implementation.
@@ -230,6 +241,10 @@ Reviewed, but keeping current implementation.
 **Reason:**
 - <reason for not making changes>
 ```
+
+#### Verification
+
+After posting all replies, verify the total number of replies matches the number of unresolved comments from Phase 1.3. If any replies failed, retry or report to the user.
 
 ### Phase 7: Remove Worktree and Report Results
 
