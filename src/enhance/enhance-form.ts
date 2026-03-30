@@ -73,6 +73,12 @@ export type EnhanceForm<T extends Record<string, unknown>> = Form<T> & {
  *
  * **Important**: Methods use `this` internally. Do not destructure.
  *
+ * **Note on `$state` Proxy**: The `enhance` callback's `getData` and `setErrors`
+ * reference the raw form object via closure, not the `$state` Proxy. This works
+ * because SvelteKit's `use:enhance` flow triggers a Svelte tick after the callback
+ * completes, ensuring the UI updates. However, if you call `form.enhance` outside
+ * of `use:enhance`, reactivity may not fire as expected.
+ *
  * @param schema - A Standard Schema V1 or Zod-compatible schema
  * @param options - Form options (initial data, callbacks)
  * @returns An `EnhanceForm<T>` object (wrap in `$state()` for reactivity)

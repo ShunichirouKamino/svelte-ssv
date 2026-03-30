@@ -30,14 +30,16 @@ for dir in "${SAMPLE_DIRS[@]}"; do
     echo "  Updating $dir/package.json"
 
     # Use node to update package.json (cross-platform, preserves formatting)
-    node -e "
+    # Pass values via env vars to avoid shell injection
+    PKG_DIR="$dir" PKG_VERSION="$VERSION" node -e "
       const fs = require('fs');
-      const path = '$dir/package.json';
-      const pkg = JSON.parse(fs.readFileSync(path, 'utf8'));
+      const pkgPath = process.env.PKG_DIR + '/package.json';
+      const version = process.env.PKG_VERSION;
+      const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
       if (pkg.dependencies && pkg.dependencies['@svelte-ssv/core'] !== undefined) {
-        pkg.dependencies['@svelte-ssv/core'] = '$VERSION';
-        fs.writeFileSync(path, JSON.stringify(pkg, null, '\t') + '\n');
-        console.log('    @svelte-ssv/core -> $VERSION');
+        pkg.dependencies['@svelte-ssv/core'] = version;
+        fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n');
+        console.log('    @svelte-ssv/core -> ' + version);
       } else {
         console.log('    Skipped (no @svelte-ssv/core dependency)');
       }
