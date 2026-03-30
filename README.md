@@ -67,13 +67,15 @@ With ssv's `createForm`, the same behavior is a single line:
 | **Immutable error merging** | Spread + delete boilerplate each time | `mergeFieldErrors()` |
 | Server error formatting | Build `{ _form: [msg] }` manually | `setServerError()` |
 | **Touched / dirty tracking** | Multiple `$state` declarations + manual blur handler | Built into `createForm()` |
-| **SvelteKit `use:enhance` integration** | cancel/update/result.type branching each form | `createEnhanceHandler()` |
+| **CRUD data population** | Manual state reset + dirty baseline management | `form.populate()` |
+| **SvelteKit `use:enhance` integration** | cancel/update/result.type branching each form | `createEnhanceHandler()` / `buildEnhanceHandler()` |
 
 ### Features
 
 - **Validation-library agnostic** — Works with Zod, Valibot, ArkType, TypeBox, or any [Standard Schema V1](https://github.com/standard-schema/standard-schema) library
 - **Framework-agnostic core** — `createFormValidator` is pure TypeScript with zero framework dependencies
 - **Unified form state** — `createForm` bundles data, errors, touched, dirty, and isDirty into one reactive object
+- **CRUD-ready** — `form.populate(data)` seeds form data with a clean dirty baseline, ideal for edit dialogs and step forms
 - **SvelteKit integration** — Optional `@svelte-ssv/core/enhance` reduces `use:enhance` boilerplate to a single attribute
 - **Tiny** — ~3 KB source, no runtime dependencies
 
@@ -182,6 +184,40 @@ const validator = createFormValidator(schema);
 
 ### SvelteKit Form with `use:enhance`
 
+Using `buildEnhanceHandler` with `createForm` (recommended):
+
+```svelte
+<script>
+  import { createForm } from '@svelte-ssv/core/form';
+  import { buildEnhanceHandler } from '@svelte-ssv/core/enhance';
+  import { z } from 'zod';
+
+  const schema = z.object({
+    name: z.string().min(1, 'Name is required'),
+    email: z.string().email('Invalid email format'),
+  });
+
+  let form = $state(createForm(schema, { name: '', email: '' }));
+
+  const handleEnhance = buildEnhanceHandler(form, {
+    onSuccess: () => closeDialog(),
+  });
+</script>
+
+<form method="POST" action="?/create" novalidate use:enhance={handleEnhance}>
+  <input bind:value={form.data.name} onblur={() => form.blur('name')} />
+  {#if form.touched.name && form.errors.name}<p class="error">{form.errors.name[0]}</p>{/if}
+
+  <input bind:value={form.data.email} onblur={() => form.blur('email')} />
+  {#if form.touched.email && form.errors.email}<p class="error">{form.errors.email[0]}</p>{/if}
+
+  <button type="submit">Submit</button>
+</form>
+```
+
+<details>
+<summary>Using <code>createEnhanceHandler</code> with manual wiring</summary>
+
 ```svelte
 <script>
   import { createFormValidator, type FormErrors } from '@svelte-ssv/core';
@@ -220,6 +256,8 @@ const validator = createFormValidator(schema);
 </form>
 ```
 
+</details>
+
 ## API Reference
 
 ### `@svelte-ssv/core` — Core (framework-agnostic)
@@ -255,13 +293,24 @@ let form = $state(createForm(schema, { name: '', email: '' }));
 // form.blur(field)    — mark touched + validate field
 // form.validate()     — validate all + mark all touched
 // form.reset()        — restore initial state
+// form.populate(data) — set data + clear errors/touched/dirty + update baseline
 ```
 
 ### `@svelte-ssv/core/enhance` — SvelteKit Helper
 
+#### `buildEnhanceHandler(form, options)`
+
+Generates a callback for SvelteKit's `use:enhance` directive from a `Form` instance. Automatically wires `getData`, `setErrors`, and `validator`.
+
+| Option | Type | Description |
+|--------|------|-------------|
+| `onSuccess?` | `() => void` | Called on successful server response |
+| `onBeforeSubmit?` | `() => boolean \| void` | Pre-submit hook. Return `false` to cancel |
+| `onAfterSubmit?` | `() => void` | Called after submission regardless of outcome |
+
 #### `createEnhanceHandler(validator, options)`
 
-Generates a callback for SvelteKit's `use:enhance` directive.
+Lower-level API for manual wiring. Use `buildEnhanceHandler` when working with `createForm`.
 
 | Option | Type | Description |
 |--------|------|-------------|
@@ -298,6 +347,7 @@ npx vitest --watch
 - [v0.1 Architecture](adr/adr_20260325_ssv_architecture.md) — Why not Superforms, React vs. Svelte form management comparison
 - [v0.2 Enhancement](adr/adr_20260325_ssv_v02_enhancement.md) — Real-time validation, enhance handler, TanStack Form comparison
 - [v0.3.1 Standard Schema](adr/adr_20260328_ssv_v031_standard_schema.md) — Standard Schema V1 support, dual-interface design
+- [v0.3.2 Enhance + Populate](adr/adr_20260330_ssv_v032_enhance_form_populate.md) — `form.populate()`, `buildEnhanceHandler()` sugar syntax
 
 ## License
 

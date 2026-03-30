@@ -66,6 +66,7 @@ jobs:
     needs: resolve-version
     if: ${{ inputs.dry_run == false }}
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - uses: actions/checkout@v4
         with:
