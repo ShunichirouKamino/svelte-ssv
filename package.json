@@ -60,7 +60,7 @@
 		"prepublishOnly": "npm run build && npm test"
 	},
 	"peerDependencies": {
-		"zod": "^3.25.0"
+		"zod": "^3.25.0 || ^4.0.0"
 	},
 	"peerDependenciesMeta": {
 		"zod": {
