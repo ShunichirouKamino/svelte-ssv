@@ -35,6 +35,7 @@
 import type { FormErrors, SchemaInput } from "../core/validator";
 import type { Form } from "../form/form";
 import { createForm } from "../form/form";
+import { createEnhanceHandler } from "./enhance";
 
 /**
  * Options for `createEnhanceForm`.
@@ -55,37 +56,14 @@ export type EnhanceFormOptions<T extends Record<string, unknown>> = {
 };
 
 /**
- * SvelteKit `use:enhance` submit input type.
- */
-type EnhanceInput = {
-	cancel: () => void;
-	formData: FormData;
-	formElement: HTMLFormElement;
-	action: URL;
-	submitter: HTMLElement | null;
-	controller: AbortController;
-};
-
-/**
- * SvelteKit `use:enhance` after-submit callback input type.
- */
-type AfterSubmitInput = {
-	update: (options?: { reset?: boolean }) => Promise<void>;
-	result: { type: string; status?: number; data?: unknown };
-	formData: FormData;
-	formElement: HTMLFormElement;
-	action: URL;
-};
-
-/**
  * Form with integrated SvelteKit `use:enhance` handler.
  *
- * Extends `Form<T>` with an `enhance` method that can be passed
+ * Extends `Form<T>` with an `enhance` property that can be passed
  * directly to SvelteKit's `use:enhance` directive.
  */
 export type EnhanceForm<T extends Record<string, unknown>> = Form<T> & {
 	/** SvelteKit `use:enhance` callback. Use as `use:enhance={form.enhance}` */
-	enhance: (input: EnhanceInput) => ((opts: AfterSubmitInput) => Promise<void>) | void;
+	readonly enhance: ReturnType<typeof createEnhanceHandler<T>>;
 };
 
 /**
@@ -93,11 +71,11 @@ export type EnhanceForm<T extends Record<string, unknown>> = Form<T> & {
  *
  * Combines `createForm` + `createEnhanceHandler` into a single call.
  *
- * **Important**: Methods use `this` internally. Do not destructure.
- *
- * The `enhance` method reads `this.data` and writes `this.errors` / `this.touched`
- * at call time, which goes through the `$state` Proxy when the form object is
- * wrapped in `$state()`. This ensures reactivity works correctly.
+ * **How $state Proxy interaction works**: The `enhance` handler's `getData`
+ * and `setErrors` callbacks reference the returned object via closure.
+ * When wrapped in `$state()`, Svelte 5's deep Proxy writes to the target
+ * object (= the returned object). So `getData` reads the latest values
+ * that were set via `bind:value` through the Proxy.
  *
  * @param schema - A Standard Schema V1 or Zod-compatible schema
  * @param options - Form options (initial data, callbacks)
@@ -109,65 +87,33 @@ export function createEnhanceForm<T extends Record<string, unknown>>(
 ): EnhanceForm<T> {
 	const form = createForm(schema, options.initial);
 
-	// Build enhanceForm by copying form's property descriptors (preserves getters)
-	// then adding the enhance method
-	const descriptors = Object.getOwnPropertyDescriptors(form);
-	const enhanceForm = Object.defineProperties(
-		{} as EnhanceForm<T>,
-		descriptors,
-	);
-
-	// enhance is an arrow function (no `this` binding needed).
-	// It references `enhanceForm` via closure. Since $state Proxy delegates
-	// reads/writes to its target, `enhanceForm.data` reflects the latest
-	// values set via bind:value through the Proxy.
-	enhanceForm.enhance = (
-		input: EnhanceInput,
-	): ((opts: AfterSubmitInput) => Promise<void>) | void => {
-		const { cancel } = input;
-
-		// Pre-submit hook
-		if (options.onBeforeSubmit) {
-			const shouldContinue = options.onBeforeSubmit();
-			if (shouldContinue === false) {
-				cancel();
-				return;
-			}
-		}
-
-		// Client-side validation — enhanceForm is the Proxy target,
-		// so reads go through the target which $state Proxy writes to
-		const result = enhanceForm.validator.validate(
-			enhanceForm.data as Record<string, unknown>,
-		);
-
-		if (!result.valid) {
-			// Mark all fields as touched so errors become visible
-			const keys = Object.keys(enhanceForm.data) as (keyof T & string)[];
+	// Create the enhance handler. getData/setErrors reference `form` (the raw object).
+	// When $state wraps the returned enhanceForm, bind:value writes go through
+	// the Proxy to the target. Since enhanceForm === form (same object reference),
+	// form.data reflects the latest values.
+	const handler = createEnhanceHandler(form.validator, {
+		getData: () => form.data,
+		setErrors: (e: FormErrors<T>) => {
+			const keys = Object.keys(form.data) as (keyof T & string)[];
 			for (const key of keys) {
-				enhanceForm.touched[key] = true;
+				form.touched[key] = true;
 			}
-			enhanceForm.errors = result.errors;
-			cancel();
-			return;
-		}
+			form.errors = e;
+		},
+		onSuccess: options.onSuccess,
+		onBeforeSubmit: options.onBeforeSubmit,
+		onAfterSubmit: options.onAfterSubmit,
+	});
 
-		enhanceForm.errors = {} as FormErrors<T>;
+	// Add enhance as a non-enumerable property on the same object.
+	// This ensures enhanceForm IS form (same reference), so $state Proxy
+	// writes to form.data are visible to getData().
+	Object.defineProperty(form, "enhance", {
+		value: handler,
+		writable: false,
+		enumerable: true,
+		configurable: false,
+	});
 
-		// Post-submission handler
-		return async ({ update, result: actionResult }) => {
-			try {
-				await update();
-				if (actionResult.type === "success" && options.onSuccess) {
-					options.onSuccess();
-				}
-			} finally {
-				if (options.onAfterSubmit) {
-					options.onAfterSubmit();
-				}
-			}
-		};
-	};
-
-	return enhanceForm;
+	return form as EnhanceForm<T>;
 }
