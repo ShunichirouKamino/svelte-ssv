@@ -1,0 +1,58 @@
+name: Deploy Sample to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Pin @svelte-ssv/core to published version
+        working-directory: sample-svelte
+        run: |
+          CURRENT=$(npm view @svelte-ssv/core version)
+          npm pkg set "dependencies.@svelte-ssv/core=^${CURRENT}"
+
+      - name: Install dependencies
+        working-directory: sample-svelte
+        run: npm install
+
+      - name: Build
+        working-directory: sample-svelte
+        env:
+          BASE_PATH: /svelte-ssv/
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: sample-svelte/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
