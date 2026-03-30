@@ -80,6 +80,15 @@ export type Form<T extends Record<string, unknown>> = {
 
 	/** Reset form to its initial state (data, errors, touched, dirty). */
 	reset: () => void;
+
+	/**
+	 * Populate form with new data and clear all state.
+	 *
+	 * Unlike `reset()` which restores the initial values, `populate()` sets
+	 * new values and treats them as the baseline for dirty tracking.
+	 * Useful for edit dialogs where existing data is loaded into the form.
+	 */
+	populate: (data: Partial<T>) => void;
 };
 
 // ---------------------------------------------------------------------------
@@ -178,6 +187,19 @@ export function createForm<T extends Record<string, unknown>>(
 				(this.data as Record<string, unknown>)[key] = (
 					fresh as Record<string, unknown>
 				)[key];
+				this.touched[key] = false;
+				this.dirty[key] = false;
+			}
+			this.errors = {} as FormErrors<T>;
+		},
+
+		populate(newData: Partial<T>): void {
+			for (const key of keys) {
+				if (key in newData) {
+					(this.data as Record<string, unknown>)[key] = (
+						newData as Record<string, unknown>
+					)[key];
+				}
 				this.touched[key] = false;
 				this.dirty[key] = false;
 			}

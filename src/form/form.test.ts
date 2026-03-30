@@ -290,4 +290,50 @@ describe("createForm", () => {
 			);
 		});
 	});
+
+	// ---------------------------------------------------------------
+	// populate
+	// ---------------------------------------------------------------
+
+	describe("populate", () => {
+		it("sets new data values", () => {
+			const form = createForm(testSchema, initial);
+			form.populate({ name: "Taro", email: "taro@example.com" });
+
+			expect(form.data.name).toBe("Taro");
+			expect(form.data.email).toBe("taro@example.com");
+		});
+
+		it("clears errors, touched, and dirty", () => {
+			const form = createForm(testSchema, initial);
+			form.blur("name"); // sets touched, may set errors
+			form.data.name = "modified";
+			form.blur("name"); // sets dirty
+
+			form.populate({ name: "New", email: "new@example.com" });
+
+			expect(form.errors).toEqual({});
+			expect(form.touched.name).toBe(false);
+			expect(form.touched.email).toBe(false);
+			expect(form.dirty.name).toBe(false);
+			expect(form.dirty.email).toBe(false);
+		});
+
+		it("supports partial data (only updates specified fields)", () => {
+			const form = createForm(testSchema, { name: "Original", email: "orig@example.com" });
+			form.populate({ name: "Updated" });
+
+			expect(form.data.name).toBe("Updated");
+			expect(form.data.email).toBe("orig@example.com"); // unchanged
+		});
+
+		it("does not affect isDirty after populate", () => {
+			const form = createForm(testSchema, initial);
+			form.populate({ name: "Taro", email: "taro@example.com" });
+
+			// isDirty compares against _initialData (the original initial values)
+			// After populate, data differs from initial, so isDirty is true
+			expect(form.isDirty).toBe(true);
+		});
+	});
 });

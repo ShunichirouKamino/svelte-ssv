@@ -2,6 +2,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createEnhanceHandler } from "./enhance";
+import { createEnhanceForm } from "./enhance-form";
 import { createFormValidator } from "../core/validator";
 
 const testSchema = z.object({
@@ -142,5 +143,110 @@ describe("createEnhanceHandler", () => {
 		});
 
 		expect(onAfterSubmit).toHaveBeenCalled();
+	});
+});
+
+// ---------------------------------------------------------------
+// createEnhanceForm
+// ---------------------------------------------------------------
+
+describe("createEnhanceForm", () => {
+	it("creates a form with enhance property", () => {
+		const form = createEnhanceForm(testSchema, {
+			initial: { name: "", email: "" },
+		});
+
+		expect(form.data).toEqual({ name: "", email: "" });
+		expect(form.errors).toEqual({});
+		expect(form.touched.name).toBe(false);
+		expect(form.enhance).toBeDefined();
+		expect(typeof form.enhance).toBe("function");
+	});
+
+	it("enhance cancels on validation failure", () => {
+		const form = createEnhanceForm(testSchema, {
+			initial: { name: "", email: "bad" },
+		});
+
+		const input = createMockInput();
+		const result = form.enhance(input);
+
+		expect(input.cancel).toHaveBeenCalled();
+		expect(result).toBeUndefined();
+		// All fields should be touched after enhance validation
+		expect(form.touched.name).toBe(true);
+		expect(form.touched.email).toBe(true);
+	});
+
+	it("enhance does not cancel on validation success", () => {
+		const form = createEnhanceForm(testSchema, {
+			initial: { name: "Taro", email: "a@b.com" },
+		});
+
+		const input = createMockInput();
+		const result = form.enhance(input);
+
+		expect(input.cancel).not.toHaveBeenCalled();
+		expect(result).toBeDefined();
+	});
+
+	it("onSuccess callback is called on server success", async () => {
+		const onSuccess = vi.fn();
+		const form = createEnhanceForm(testSchema, {
+			initial: { name: "Taro", email: "a@b.com" },
+			onSuccess,
+		});
+
+		const input = createMockInput();
+		// biome-ignore lint/complexity/noBannedTypes: type assertion for testing
+		const afterSubmit = form.enhance(input) as Function;
+
+		await afterSubmit({
+			update: vi.fn(),
+			result: { type: "success" },
+			formData: new FormData(),
+			formElement: document.createElement("form"),
+			action: new URL("http://localhost"),
+		});
+
+		expect(onSuccess).toHaveBeenCalled();
+	});
+
+	it("blur works on the enhance form", () => {
+		const form = createEnhanceForm(testSchema, {
+			initial: { name: "", email: "" },
+		});
+
+		form.blur("email");
+
+		expect(form.touched.email).toBe(true);
+		expect(form.errors.email).toBeDefined();
+	});
+
+	it("populate works on the enhance form", () => {
+		const form = createEnhanceForm(testSchema, {
+			initial: { name: "", email: "" },
+		});
+
+		form.populate({ name: "Taro", email: "taro@example.com" });
+
+		expect(form.data.name).toBe("Taro");
+		expect(form.data.email).toBe("taro@example.com");
+		expect(form.touched.name).toBe(false);
+		expect(form.errors).toEqual({});
+	});
+
+	it("reset works on the enhance form", () => {
+		const form = createEnhanceForm(testSchema, {
+			initial: { name: "", email: "" },
+		});
+
+		form.data.name = "Modified";
+		form.blur("name");
+		form.reset();
+
+		expect(form.data.name).toBe("");
+		expect(form.touched.name).toBe(false);
+		expect(form.errors).toEqual({});
 	});
 });
