@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(PYTHONIOENCODING=utf-8 python \"C:/Users/li3039/.claude/plugins/marketplaces/anthropic-agent-skills/skills/skill-creator/scripts/package_skill.py\" /d/workspace/ssv/.claude/skills/tag 2>&1)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 python \"C:/Users/li3039/.claude/plugins/marketplaces/anthropic-agent-skills/skills/skill-creator/scripts/package_skill.py\" /d/workspace/ssv/.claude/skills/tag 2>&1)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}

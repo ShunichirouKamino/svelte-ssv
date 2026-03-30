@@ -6,35 +6,69 @@
 	import RegisterForm from "./components/RegisterForm.svelte";
 	import RegisterToast from "./components/RegisterToast.svelte";
 	import RegisterSummary from "./components/RegisterSummary.svelte";
+	import EditUsers from "./components/EditUsers.svelte";
+	import StepForm from "./components/StepForm.svelte";
+	import InlineTable from "./components/InlineTable.svelte";
 
-	type Page = "login" | "valibot" | "arktype" | "register" | "toast" | "summary" | "counter";
+	type Page = "login" | "valibot" | "arktype" | "register" | "toast" | "summary" | "edit" | "step" | "inline" | "counter";
 	let currentPage = $state<Page>("login");
 
-	const pages: { id: Page; label: string }[] = [
-		{ id: "login", label: "Login (Zod)" },
-		{ id: "valibot", label: "Valibot" },
-		{ id: "arktype", label: "ArkType" },
-		{ id: "register", label: "Register" },
-		{ id: "toast", label: "Toast" },
-		{ id: "summary", label: "Summary" },
-		{ id: "counter", label: "Counter" },
+	const sections: { label: string; items: { id: Page; label: string }[] }[] = [
+		{
+			label: "Simple Form",
+			items: [
+				{ id: "login", label: "Login (Zod)" },
+				{ id: "valibot", label: "Valibot" },
+				{ id: "arktype", label: "ArkType" },
+			],
+		},
+		{
+			label: "Register",
+			items: [
+				{ id: "register", label: "Register" },
+				{ id: "toast", label: "Toast" },
+				{ id: "summary", label: "Summary" },
+			],
+		},
+		{
+			label: "CRUD",
+			items: [
+				{ id: "edit", label: "Edit (Modal)" },
+				{ id: "step", label: "Steps" },
+				{ id: "inline", label: "Inline" },
+			],
+		},
+		{
+			label: "Other",
+			items: [
+				{ id: "counter", label: "Counter" },
+			],
+		},
 	];
+
 </script>
 
-<div class="app">
-	<header>
+<div class="layout">
+	<aside>
+		<span class="logo">@svelte-ssv/core</span>
+		<span class="env-badge">Svelte (no SvelteKit)</span>
+
 		<nav>
-			<span class="logo">@svelte-ssv/core</span>
-			<span class="badge">Svelte only (no SvelteKit)</span>
-			<div class="links">
-				{#each pages as page}
-					<button class:active={currentPage === page.id} onclick={() => (currentPage = page.id)}>
-						{page.label}
-					</button>
-				{/each}
-			</div>
+			{#each sections as section}
+				<div class="section">
+					<h3>{section.label}</h3>
+					{#each section.items as item}
+						<button
+							class:active={currentPage === item.id}
+							onclick={() => (currentPage = item.id)}
+						>
+							{item.label}
+						</button>
+					{/each}
+				</div>
+			{/each}
 		</nav>
-	</header>
+	</aside>
 
 	<main>
 		{#if currentPage === "login"}
@@ -49,6 +83,12 @@
 			<RegisterToast />
 		{:else if currentPage === "summary"}
 			<RegisterSummary />
+		{:else if currentPage === "edit"}
+			<EditUsers />
+		{:else if currentPage === "step"}
+			<StepForm />
+		{:else if currentPage === "inline"}
+			<InlineTable />
 		{:else}
 			<Counter />
 		{/if}
@@ -71,66 +111,86 @@
 		line-height: 1.6;
 	}
 
-	.app {
-		max-width: 800px;
-		margin: 0 auto;
-	}
-
-	header {
-		border-bottom: 1px solid #d1d5db;
-		padding: 0 1.5rem;
-		background: #fff;
-	}
-
-	nav {
+	.layout {
 		display: flex;
-		align-items: center;
-		gap: 1rem;
-		height: 56px;
-		flex-wrap: wrap;
+		min-height: 100vh;
+	}
+
+	aside {
+		width: 220px;
+		flex-shrink: 0;
+		background: #fff;
+		border-right: 1px solid #d1d5db;
+		padding: 1.25rem 1rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		position: sticky;
+		top: 0;
+		height: 100vh;
+		overflow-y: auto;
 	}
 
 	.logo {
 		font-weight: 700;
+		font-size: 0.95rem;
 		color: #4f46e5;
 	}
 
-	.badge {
-		font-size: 0.7rem;
+	.env-badge {
+		font-size: 0.65rem;
 		font-weight: 600;
 		background: #059669;
 		color: white;
-		padding: 0.15rem 0.5rem;
-		border-radius: 4px;
+		padding: 0.1rem 0.4rem;
+		border-radius: 3px;
+		align-self: flex-start;
+		margin-bottom: 0.75rem;
 	}
 
-	.links {
+	nav {
 		display: flex;
+		flex-direction: column;
 		gap: 0.5rem;
-		margin-left: auto;
 	}
 
-	.links button {
-		padding: 0.4rem 0.8rem;
-		border: 1px solid #d1d5db;
-		border-radius: 6px;
-		background: #fff;
+	.section h3 {
+		font-size: 0.7rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #6b7280;
+		padding: 0.5rem 0.5rem 0.2rem;
+		margin: 0;
+	}
+
+	.section button {
+		display: block;
+		width: 100%;
+		text-align: left;
+		padding: 0.35rem 0.5rem;
 		font-size: 0.85rem;
+		color: #1f2937;
+		background: none;
+		border: none;
+		border-radius: 4px;
 		cursor: pointer;
-		transition: border-color 0.15s, background 0.15s;
+		transition: background 0.1s;
 	}
 
-	.links button:hover {
-		border-color: #4f46e5;
+	.section button:hover {
+		background: #f3f4f6;
 	}
 
-	.links button.active {
-		background: #4f46e5;
-		color: white;
-		border-color: #4f46e5;
+	.section button.active {
+		background: #eef2ff;
+		color: #4f46e5;
+		font-weight: 600;
 	}
 
 	main {
-		padding: 2rem 1.5rem;
+		flex: 1;
+		padding: 2rem 2.5rem;
+		max-width: 900px;
 	}
 </style>

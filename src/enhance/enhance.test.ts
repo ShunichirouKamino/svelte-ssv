@@ -2,6 +2,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 import { createEnhanceHandler } from "./enhance";
+import { buildEnhanceHandler } from "./enhance-form";
+import { createForm } from "../form/form";
 import { createFormValidator } from "../core/validator";
 
 const testSchema = z.object({
@@ -142,5 +144,80 @@ describe("createEnhanceHandler", () => {
 		});
 
 		expect(onAfterSubmit).toHaveBeenCalled();
+	});
+});
+
+// ---------------------------------------------------------------
+// buildEnhanceHandler
+// ---------------------------------------------------------------
+
+describe("buildEnhanceHandler", () => {
+	it("returns a function", () => {
+		const form = createForm(testSchema, { name: "", email: "" });
+		const handler = buildEnhanceHandler(form);
+
+		expect(typeof handler).toBe("function");
+	});
+
+	it("cancels on validation failure and marks all fields touched", () => {
+		const form = createForm(testSchema, { name: "", email: "bad" });
+		const handler = buildEnhanceHandler(form);
+
+		const input = createMockInput();
+		const result = handler(input);
+
+		expect(input.cancel).toHaveBeenCalled();
+		expect(result).toBeUndefined();
+		expect(form.touched.name).toBe(true);
+		expect(form.touched.email).toBe(true);
+		expect(form.errors.name).toBeDefined();
+		expect(form.errors.email).toBeDefined();
+	});
+
+	it("does not cancel on validation success", () => {
+		const form = createForm(testSchema, { name: "Taro", email: "a@b.com" });
+		const handler = buildEnhanceHandler(form);
+
+		const input = createMockInput();
+		const result = handler(input);
+
+		expect(input.cancel).not.toHaveBeenCalled();
+		expect(result).toBeDefined();
+	});
+
+	it("calls onSuccess on server success", async () => {
+		const onSuccess = vi.fn();
+		const form = createForm(testSchema, { name: "Taro", email: "a@b.com" });
+		const handler = buildEnhanceHandler(form, { onSuccess });
+
+		const input = createMockInput();
+		// biome-ignore lint/complexity/noBannedTypes: type assertion for testing
+		const afterSubmit = handler(input) as Function;
+
+		await afterSubmit({
+			update: vi.fn(),
+			result: { type: "success" },
+			formData: new FormData(),
+			formElement: document.createElement("form"),
+			action: new URL("http://localhost"),
+		});
+
+		expect(onSuccess).toHaveBeenCalled();
+	});
+
+	it("reads latest form data (simulating Proxy behavior)", () => {
+		const form = createForm(testSchema, { name: "", email: "" });
+		const handler = buildEnhanceHandler(form);
+
+		// Simulate bind:value updating the form data
+		form.data.name = "Taro";
+		form.data.email = "taro@example.com";
+
+		const input = createMockInput();
+		const result = handler(input);
+
+		// Should pass validation since data was updated
+		expect(input.cancel).not.toHaveBeenCalled();
+		expect(result).toBeDefined();
 	});
 });
