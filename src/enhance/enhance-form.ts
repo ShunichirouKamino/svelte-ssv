@@ -117,11 +117,13 @@ export function createEnhanceForm<T extends Record<string, unknown>>(
 		descriptors,
 	);
 
-	// Add the enhance method that uses `this` (the Proxy) at call time
-	enhanceForm.enhance = function enhance(
-		this: EnhanceForm<T>,
+	// enhance is an arrow function (no `this` binding needed).
+	// It references `enhanceForm` via closure. Since $state Proxy delegates
+	// reads/writes to its target, `enhanceForm.data` reflects the latest
+	// values set via bind:value through the Proxy.
+	enhanceForm.enhance = (
 		input: EnhanceInput,
-	): ((opts: AfterSubmitInput) => Promise<void>) | void {
+	): ((opts: AfterSubmitInput) => Promise<void>) | void => {
 		const { cancel } = input;
 
 		// Pre-submit hook
@@ -133,23 +135,24 @@ export function createEnhanceForm<T extends Record<string, unknown>>(
 			}
 		}
 
-		// Client-side validation using `this` (the $state Proxy)
-		const result = this.validator.validate(
-			this.data as Record<string, unknown>,
+		// Client-side validation — enhanceForm is the Proxy target,
+		// so reads go through the target which $state Proxy writes to
+		const result = enhanceForm.validator.validate(
+			enhanceForm.data as Record<string, unknown>,
 		);
 
 		if (!result.valid) {
 			// Mark all fields as touched so errors become visible
-			const keys = Object.keys(this.data) as (keyof T & string)[];
+			const keys = Object.keys(enhanceForm.data) as (keyof T & string)[];
 			for (const key of keys) {
-				this.touched[key] = true;
+				enhanceForm.touched[key] = true;
 			}
-			this.errors = result.errors;
+			enhanceForm.errors = result.errors;
 			cancel();
 			return;
 		}
 
-		this.errors = {} as FormErrors<T>;
+		enhanceForm.errors = {} as FormErrors<T>;
 
 		// Post-submission handler
 		return async ({ update, result: actionResult }) => {
