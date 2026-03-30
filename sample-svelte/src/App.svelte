@@ -6,8 +6,9 @@
 	import RegisterForm from "./components/RegisterForm.svelte";
 	import RegisterToast from "./components/RegisterToast.svelte";
 	import RegisterSummary from "./components/RegisterSummary.svelte";
+	import EditUsers from "./components/EditUsers.svelte";
 
-	type Page = "login" | "valibot" | "arktype" | "register" | "toast" | "summary" | "counter";
+	type Page = "login" | "valibot" | "arktype" | "register" | "toast" | "summary" | "edit" | "counter";
 	let currentPage = $state<Page>("login");
 
 	const pages: { id: Page; label: string }[] = [
@@ -17,6 +18,7 @@
 		{ id: "register", label: "Register" },
 		{ id: "toast", label: "Toast" },
 		{ id: "summary", label: "Summary" },
+		{ id: "edit", label: "Edit" },
 		{ id: "counter", label: "Counter" },
 	];
 </script>
@@ -49,6 +51,8 @@
 			<RegisterToast />
 		{:else if currentPage === "summary"}
 			<RegisterSummary />
+		{:else if currentPage === "edit"}
+			<EditUsers />
 		{:else}
 			<Counter />
 		{/if}

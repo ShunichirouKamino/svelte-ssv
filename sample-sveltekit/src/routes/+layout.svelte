@@ -13,6 +13,7 @@
 			<a href="/register-v3">v0.3.2</a>
 			<a href="/register-toast">Toast</a>
 			<a href="/register-summary">Summary</a>
+			<a href="/edit">Edit</a>
 			<a href="/counter">Counter</a>
 		</div>
 	</nav>
