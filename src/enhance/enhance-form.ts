@@ -94,7 +94,12 @@ export function createEnhanceForm<T extends Record<string, unknown>>(
 			return enhanceForm.data;
 		},
 		setErrors(e) {
-			enhanceForm.validate();
+			// Mark all fields as touched so errors become visible, but skip
+			// redundant validation (createEnhanceHandler already validated)
+			const keys = Object.keys(enhanceForm.data) as (keyof T & string)[];
+			for (const key of keys) {
+				enhanceForm.touched[key] = true;
+			}
 			enhanceForm.errors = e;
 		},
 		onSuccess: options.onSuccess,

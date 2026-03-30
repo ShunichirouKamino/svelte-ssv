@@ -196,9 +196,9 @@ export function createForm<T extends Record<string, unknown>>(
 		populate(newData: Partial<T>): void {
 			for (const key of keys) {
 				if (key in newData) {
-					(this.data as Record<string, unknown>)[key] = (
-						newData as Record<string, unknown>
-					)[key];
+					const val = (newData as Record<string, unknown>)[key];
+					(this.data as Record<string, unknown>)[key] = val;
+					(_initialData as Record<string, unknown>)[key] = val;
 				}
 				this.touched[key] = false;
 				this.dirty[key] = false;

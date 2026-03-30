@@ -327,12 +327,19 @@ describe("createForm", () => {
 			expect(form.data.email).toBe("orig@example.com"); // unchanged
 		});
 
-		it("does not affect isDirty after populate", () => {
+		it("isDirty is false after populate (baseline is updated)", () => {
 			const form = createForm(testSchema, initial);
 			form.populate({ name: "Taro", email: "taro@example.com" });
 
-			// isDirty compares against _initialData (the original initial values)
-			// After populate, data differs from initial, so isDirty is true
+			// populate() updates _initialData, so isDirty starts as false
+			expect(form.isDirty).toBe(false);
+		});
+
+		it("isDirty becomes true when data is modified after populate", () => {
+			const form = createForm(testSchema, initial);
+			form.populate({ name: "Taro", email: "taro@example.com" });
+
+			form.data.name = "Changed";
 			expect(form.isDirty).toBe(true);
 		});
 	});

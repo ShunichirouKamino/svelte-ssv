@@ -29,7 +29,7 @@ for dir in "${SAMPLE_DIRS[@]}"; do
   if [ -f "$dir/package.json" ]; then
     echo "  Updating $dir/package.json"
 
-    # Use node to update package.json (cross-platform, preserves formatting)
+    # Use node to update package.json (rewrites with tab indentation)
     # Pass values via env vars to avoid shell injection
     PKG_DIR="$dir" PKG_VERSION="$VERSION" node -e "
       const fs = require('fs');
