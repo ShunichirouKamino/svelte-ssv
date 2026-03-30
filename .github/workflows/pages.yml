@@ -30,6 +30,7 @@ jobs:
         run: |
           CURRENT=$(npm view @svelte-ssv/core version)
           npm pkg set "dependencies.@svelte-ssv/core=^${CURRENT}"
+          rm -f package-lock.json
 
       - name: Install dependencies
         working-directory: sample-svelte
