@@ -14,6 +14,10 @@
 			},
 		}),
 	);
+
+	// Extract enhance handler to a variable so use:enhance receives the
+	// function directly, not through the $state Proxy
+	const handleEnhance = form.enhance;
 </script>
 
 <h1>Register Form</h1>
@@ -29,7 +33,7 @@
 	</div>
 {/if}
 
-<form method="POST" novalidate use:enhance={form.enhance}>
+<form method="POST" novalidate use:enhance={handleEnhance}>
 	<div class="field">
 		<label for="name">
 			Name
