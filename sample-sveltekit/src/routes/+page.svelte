@@ -23,6 +23,15 @@
 		</p>
 	</a>
 
+	<a href="/register-v3" class="card">
+		<h2>Register — v0.3.2 <span class="badge">new</span></h2>
+		<p>
+			<code>createEnhanceForm</code> — single call replaces
+			<code>createForm</code> + <code>createEnhanceHandler</code>.
+			Compare with the v0.3 Register page to see the boilerplate reduction.
+		</p>
+	</a>
+
 	<a href="/register-toast" class="card">
 		<h2>Register — Toast <span class="badge">v0.3</span></h2>
 		<p>

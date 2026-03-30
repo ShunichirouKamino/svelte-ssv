@@ -10,6 +10,7 @@
 		<div class="links">
 			<a href="/login">Login</a>
 			<a href="/register">Register</a>
+			<a href="/register-v3">v0.3.2</a>
 			<a href="/register-toast">Toast</a>
 			<a href="/register-summary">Summary</a>
 			<a href="/counter">Counter</a>
