@@ -115,10 +115,10 @@
 <section class="code-note">
 	<h2>What's happening</h2>
 	<ul>
+		<li><code>createEnhanceForm</code> — single call sets up form + <code>use:enhance</code></li>
 		<li><code>form.populate(user)</code> sets data and updates dirty baseline — <code>isDirty</code> starts <code>false</code></li>
-		<li>Save is disabled until user edits (<code>disabled={"{"}!form.isDirty{"}"}</code>)</li>
 		<li>Undo restores to populated values (not empty initial)</li>
-		<li><code>populate()</code> preserves the <code>enhance</code> reference — no re-creation needed</li>
+		<li>Same form handles both <strong>create</strong> and <strong>edit</strong></li>
 	</ul>
 </section>
 
@@ -146,9 +146,9 @@
 	.error { color: var(--color-error); font-size: 0.8rem; }
 	.actions { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
 	.submit-btn { padding: 0.5rem 1rem; background: var(--color-primary); color: white; border: none; border-radius: var(--radius); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
-	.submit-btn:hover:not(:disabled) { background: var(--color-primary-hover); }
-	.submit-btn:disabled, .reset-btn:disabled { opacity: 0.4; cursor: default; }
+	.submit-btn:hover { background: var(--color-primary-hover); }
 	.reset-btn { padding: 0.5rem 1rem; background: none; border: 1px solid var(--color-border); border-radius: var(--radius); font-size: 0.85rem; cursor: pointer; }
+	.reset-btn:disabled { opacity: 0.4; cursor: default; }
 	.cancel-btn { padding: 0.5rem 1rem; background: none; border: none; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; }
 	.dirty-notice { font-size: 0.8rem; color: var(--color-primary); font-style: italic; margin-top: 0.25rem; }
 	.code-note { margin-top: 2rem; padding: 1rem 1.5rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); max-width: 600px; }

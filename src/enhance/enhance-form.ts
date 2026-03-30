@@ -32,10 +32,9 @@
  * ```
  */
 
-import type { SchemaInput } from "../core/validator";
+import type { FormErrors, SchemaInput } from "../core/validator";
 import type { Form } from "../form/form";
 import { createForm } from "../form/form";
-import { createEnhanceHandler } from "./enhance";
 
 /**
  * Options for `createEnhanceForm`.
@@ -56,14 +55,37 @@ export type EnhanceFormOptions<T extends Record<string, unknown>> = {
 };
 
 /**
+ * SvelteKit `use:enhance` submit input type.
+ */
+type EnhanceInput = {
+	cancel: () => void;
+	formData: FormData;
+	formElement: HTMLFormElement;
+	action: URL;
+	submitter: HTMLElement | null;
+	controller: AbortController;
+};
+
+/**
+ * SvelteKit `use:enhance` after-submit callback input type.
+ */
+type AfterSubmitInput = {
+	update: (options?: { reset?: boolean }) => Promise<void>;
+	result: { type: string; status?: number; data?: unknown };
+	formData: FormData;
+	formElement: HTMLFormElement;
+	action: URL;
+};
+
+/**
  * Form with integrated SvelteKit `use:enhance` handler.
  *
- * Extends `Form<T>` with an `enhance` property that can be passed
+ * Extends `Form<T>` with an `enhance` method that can be passed
  * directly to SvelteKit's `use:enhance` directive.
  */
 export type EnhanceForm<T extends Record<string, unknown>> = Form<T> & {
 	/** SvelteKit `use:enhance` callback. Use as `use:enhance={form.enhance}` */
-	readonly enhance: ReturnType<typeof createEnhanceHandler<T>>;
+	enhance: (input: EnhanceInput) => ((opts: AfterSubmitInput) => Promise<void>) | void;
 };
 
 /**
@@ -73,11 +95,9 @@ export type EnhanceForm<T extends Record<string, unknown>> = Form<T> & {
  *
  * **Important**: Methods use `this` internally. Do not destructure.
  *
- * **Note on `$state` Proxy**: The `enhance` callback's `getData` and `setErrors`
- * reference the raw form object via closure, not the `$state` Proxy. This works
- * because SvelteKit's `use:enhance` flow triggers a Svelte tick after the callback
- * completes, ensuring the UI updates. However, if you call `form.enhance` outside
- * of `use:enhance`, reactivity may not fire as expected.
+ * The `enhance` method reads `this.data` and writes `this.errors` / `this.touched`
+ * at call time, which goes through the `$state` Proxy when the form object is
+ * wrapped in `$state()`. This ensures reactivity works correctly.
  *
  * @param schema - A Standard Schema V1 or Zod-compatible schema
  * @param options - Form options (initial data, callbacks)
@@ -89,34 +109,62 @@ export function createEnhanceForm<T extends Record<string, unknown>>(
 ): EnhanceForm<T> {
 	const form = createForm(schema, options.initial);
 
-	const enhanceHandler = createEnhanceHandler(form.validator, {
-		getData() {
-			return enhanceForm.data;
-		},
-		setErrors(e) {
-			// Mark all fields as touched so errors become visible, but skip
-			// redundant validation (createEnhanceHandler already validated)
-			const keys = Object.keys(enhanceForm.data) as (keyof T & string)[];
-			for (const key of keys) {
-				enhanceForm.touched[key] = true;
-			}
-			enhanceForm.errors = e;
-		},
-		onSuccess: options.onSuccess,
-		onBeforeSubmit: options.onBeforeSubmit,
-		onAfterSubmit: options.onAfterSubmit,
-	});
-
-	const enhanceForm: EnhanceForm<T> = Object.defineProperty(
-		form as EnhanceForm<T>,
-		"enhance",
-		{
-			get() {
-				return enhanceHandler;
-			},
-			enumerable: true,
-		},
+	// Build enhanceForm by copying form's property descriptors (preserves getters)
+	// then adding the enhance method
+	const descriptors = Object.getOwnPropertyDescriptors(form);
+	const enhanceForm = Object.defineProperties(
+		{} as EnhanceForm<T>,
+		descriptors,
 	);
+
+	// Add the enhance method that uses `this` (the Proxy) at call time
+	enhanceForm.enhance = function enhance(
+		this: EnhanceForm<T>,
+		input: EnhanceInput,
+	): ((opts: AfterSubmitInput) => Promise<void>) | void {
+		const { cancel } = input;
+
+		// Pre-submit hook
+		if (options.onBeforeSubmit) {
+			const shouldContinue = options.onBeforeSubmit();
+			if (shouldContinue === false) {
+				cancel();
+				return;
+			}
+		}
+
+		// Client-side validation using `this` (the $state Proxy)
+		const result = this.validator.validate(
+			this.data as Record<string, unknown>,
+		);
+
+		if (!result.valid) {
+			// Mark all fields as touched so errors become visible
+			const keys = Object.keys(this.data) as (keyof T & string)[];
+			for (const key of keys) {
+				this.touched[key] = true;
+			}
+			this.errors = result.errors;
+			cancel();
+			return;
+		}
+
+		this.errors = {} as FormErrors<T>;
+
+		// Post-submission handler
+		return async ({ update, result: actionResult }) => {
+			try {
+				await update();
+				if (actionResult.type === "success" && options.onSuccess) {
+					options.onSuccess();
+				}
+			} finally {
+				if (options.onAfterSubmit) {
+					options.onAfterSubmit();
+				}
+			}
+		};
+	};
 
 	return enhanceForm;
 }
