@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { enhance } from "$app/forms";
 	import { createForm } from "@svelte-ssv/core/form";
-	import { createEnhanceHandler } from "@svelte-ssv/core/enhance";
 	import { registerSchema } from "$lib/schemas/register";
 
 	let submitted = $state(false);
@@ -15,15 +14,9 @@
 		}),
 	);
 
-	const handleEnhance = createEnhanceHandler(form.validator, {
-		getData: () => form.data,
-		setErrors: (e) => {
-			const keys = Object.keys(form.data) as (keyof typeof form.data)[];
-			for (const key of keys) {
-				form.touched[key] = true;
-			}
-			form.errors = e;
-		},
+	// buildEnhance must be called AFTER $state() wrapping.
+	// form.buildEnhance() uses `this` (the Proxy) to read data.
+	const handleEnhance = form.buildEnhance({
 		onSuccess: () => {
 			submitted = true;
 			form.reset();
@@ -33,7 +26,8 @@
 
 <h1>Register Form</h1>
 <p class="description">
-	<code>createForm</code> + <code>createEnhanceHandler</code> — the proven working pattern.
+	<code>createForm</code> + <code>buildEnhance()</code> — unified form state with
+	SvelteKit <code>use:enhance</code> in just 2 calls.
 </p>
 
 {#if submitted}
