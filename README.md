@@ -2,6 +2,8 @@
 
 **SSV (Svelte Simple Validation)** — A lightweight, validation-library agnostic form validation utility for Svelte/SvelteKit.
 
+**Demo**: https://shunichiroukamino.github.io/svelte-ssv/
+
 ## Why ssv?
 
 Svelte 5's `$state`, `bind:value`, and SvelteKit's `use:enhance` already cover 90% of form management that React developers need react-hook-form for. The one missing piece is converting validation errors into field-indexed errors — and that's exactly what ssv does, as a lightweight utility.
