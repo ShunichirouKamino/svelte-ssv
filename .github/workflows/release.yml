@@ -87,14 +87,16 @@ jobs:
       - name: Test
         run: npm test
 
-      - name: Update version in package.json
-        run: npm version ${{ needs.resolve-version.outputs.version }} --no-git-tag-version
+      - name: Update version in package.json and jsr.json
+        run: |
+          npm version ${{ needs.resolve-version.outputs.version }} --no-git-tag-version
+          jq '.version = "${{ needs.resolve-version.outputs.version }}"' jsr.json > jsr.json.tmp && mv jsr.json.tmp jsr.json
 
       - name: Commit version bump
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
+          git add package.json package-lock.json jsr.json
           git commit -m "release: v${{ needs.resolve-version.outputs.version }}"
 
       - name: Create tag
@@ -165,3 +167,6 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to JSR
+        run: npx jsr publish --allow-dirty

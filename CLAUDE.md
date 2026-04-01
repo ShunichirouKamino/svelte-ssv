@@ -49,7 +49,7 @@ npm run format:check # biome format . (CI uses this)
 - `/tag` skill — read-only version resolution (does not publish)
 - `/release` skill — triggers GitHub Actions release workflow (build, test, tag, publish)
 - Never publish from local machine; always go through GitHub Actions
-- **JSR**: published separately via `jsr publish` from local (config in `jsr.json`). Version must be kept in sync with `package.json`
+- **JSR**: published alongside npm in the release workflow (config in `jsr.json`). Version is synced automatically
 
 ## Conventions
 
