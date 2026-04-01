@@ -1,6 +1,7 @@
 # @svelte-ssv/core
 
 [![npm version](https://img.shields.io/npm/v/@svelte-ssv/core)](https://www.npmjs.com/package/@svelte-ssv/core)
+[![JSR](https://jsr.io/badges/@svelte-ssv/core)](https://jsr.io/@svelte-ssv/core)
 [![CI](https://github.com/ShunichirouKamino/svelte-ssv/actions/workflows/ci.yml/badge.svg)](https://github.com/ShunichirouKamino/svelte-ssv/actions/workflows/ci.yml)
 [![npm bundle size](https://img.shields.io/bundlephobia/minzip/@svelte-ssv/core)](https://bundlephobia.com/package/@svelte-ssv/core)
 [![license](https://img.shields.io/npm/l/@svelte-ssv/core)](https://github.com/ShunichirouKamino/svelte-ssv/blob/main/LICENSE)
@@ -102,6 +103,9 @@ ssv accepts any schema implementing [Standard Schema V1](https://github.com/stan
 
 ```bash
 npm install @svelte-ssv/core
+
+# or via JSR (Deno / Bun / Node.js)
+npx jsr add @svelte-ssv/core
 ```
 
 ## Quick Start
