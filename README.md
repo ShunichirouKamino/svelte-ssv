@@ -1,5 +1,10 @@
 # @svelte-ssv/core
 
+[![npm version](https://img.shields.io/npm/v/@svelte-ssv/core)](https://www.npmjs.com/package/@svelte-ssv/core)
+[![CI](https://github.com/ShunichirouKamino/svelte-ssv/actions/workflows/ci.yml/badge.svg)](https://github.com/ShunichirouKamino/svelte-ssv/actions/workflows/ci.yml)
+[![npm bundle size](https://img.shields.io/bundlephobia/minzip/@svelte-ssv/core)](https://bundlephobia.com/package/@svelte-ssv/core)
+[![license](https://img.shields.io/npm/l/@svelte-ssv/core)](https://github.com/ShunichirouKamino/svelte-ssv/blob/main/LICENSE)
+
 **SSV (Svelte Simple Validation)** — A lightweight, validation-library agnostic form validation utility for Svelte/SvelteKit.
 
 **Demo**: https://shunichiroukamino.github.io/svelte-ssv/
