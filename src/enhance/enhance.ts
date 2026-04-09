@@ -38,12 +38,12 @@ import type { FormErrors, FormValidator } from "../core/validator";
 /**
  * Options for `createEnhanceHandler`.
  */
-export type EnhanceHandlerOptions<T extends Record<string, unknown>> = {
+export type EnhanceHandlerOptions<T extends Record<string, unknown>, E extends string = never> = {
 	/** Function that returns the current form data */
 	getData: () => T;
 
 	/** Function to update the error state */
-	setErrors: (errors: FormErrors<T>) => void;
+	setErrors: (errors: FormErrors<T, E>) => void;
 
 	/** Callback on successful submission (e.g., close modal) */
 	onSuccess?: () => void;
@@ -66,9 +66,9 @@ export type EnhanceHandlerOptions<T extends Record<string, unknown>> = {
  * @param options - Callback options
  * @returns A function to pass to SvelteKit's `use:enhance`
  */
-export function createEnhanceHandler<T extends Record<string, unknown>>(
-	validator: FormValidator<T>,
-	options: EnhanceHandlerOptions<T>,
+export function createEnhanceHandler<T extends Record<string, unknown>, E extends string = never>(
+	validator: FormValidator<T, E>,
+	options: EnhanceHandlerOptions<T, E>,
 ): (input: {
 	cancel: () => void;
 	formData: FormData;
@@ -102,7 +102,7 @@ export function createEnhanceHandler<T extends Record<string, unknown>>(
 			cancel();
 			return;
 		}
-		options.setErrors({} as FormErrors<T>);
+		options.setErrors({} as FormErrors<T, E>);
 
 		// Post-submission handler
 		return async ({ update, result: actionResult }) => {

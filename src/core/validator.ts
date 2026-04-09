@@ -94,35 +94,47 @@ export type SchemaInput<T = unknown> = StandardSchema<T> | ZodSchema<T>;
  *
  * The `_form` key is reserved for form-level errors (not associated with a specific field).
  *
+ * The optional second type parameter `E` allows declaring additional error keys
+ * for custom validation paths (e.g., Zod's `.refine()` with a `path` that does
+ * not correspond to any schema field).
+ *
  * @example
  * ```typescript
+ * // Basic usage
  * const errors: FormErrors<{ name: string; email: string }> = {
  *   name: ['Name is required'],
  *   _form: ['A server error occurred'],
  * };
+ *
+ * // With custom error keys
+ * const errors: FormErrors<{ kbId?: string; kbName?: string }, '_kbGroup'> = {
+ *   _kbGroup: ['All fields must be filled or all must be empty'],
+ * };
  * ```
  */
-export type FormErrors<T extends Record<string, unknown> = Record<string, unknown>> = {
+export type FormErrors<T extends Record<string, unknown> = Record<string, unknown>, E extends string = never> = {
 	[K in keyof T]?: string[];
 } & {
 	/** Form-level errors (not associated with a specific field) */
 	_form?: string[];
+} & {
+	[K in E]?: string[];
 };
 
 /**
  * Validation result.
  */
-export type ValidationResult<T extends Record<string, unknown>> =
-	| { valid: true; data: T; errors: FormErrors<T> }
-	| { valid: false; data: undefined; errors: FormErrors<T> };
+export type ValidationResult<T extends Record<string, unknown>, E extends string = never> =
+	| { valid: true; data: T; errors: FormErrors<T, E> }
+	| { valid: false; data: undefined; errors: FormErrors<T, E> };
 
 /**
  * Field validation result.
  *
  * Contains only the errors for the specified field. Empty object if no errors.
  */
-export type FieldValidationResult<T extends Record<string, unknown>> = {
-	errors: FormErrors<T>;
+export type FieldValidationResult<T extends Record<string, unknown>, E extends string = never> = {
+	errors: FormErrors<T, E>;
 };
 
 /**
@@ -131,9 +143,9 @@ export type FieldValidationResult<T extends Record<string, unknown>> = {
  * Provides validation functionality from any supported schema.
  * Framework-agnostic — works with Svelte, React, Vue, or any other framework.
  */
-export type FormValidator<T extends Record<string, unknown>> = {
+export type FormValidator<T extends Record<string, unknown>, E extends string = never> = {
 	/** Validate the entire form */
-	validate: (data: Record<string, unknown>) => ValidationResult<T>;
+	validate: (data: Record<string, unknown>) => ValidationResult<T, E>;
 
 	/**
 	 * Validate a single field (for onblur / oninput handlers).
@@ -141,7 +153,7 @@ export type FormValidator<T extends Record<string, unknown>> = {
 	 * Validates the entire form data and extracts only the errors
 	 * for the specified field. This ensures cross-field validations work correctly.
 	 */
-	validateField: (field: keyof T & string, data: Record<string, unknown>) => FieldValidationResult<T>;
+	validateField: (field: (keyof T & string) | E, data: Record<string, unknown>) => FieldValidationResult<T, E>;
 
 	/**
 	 * Convert validation issues into field-indexed FormErrors.
@@ -149,10 +161,10 @@ export type FormValidator<T extends Record<string, unknown>> = {
 	 * Accepts either a flat array of issues (Standard Schema style) or
 	 * an object with an `issues` property (Zod error style) for backward compatibility.
 	 */
-	parseErrors: (issuesOrError: readonly StandardIssue[] | { issues: readonly StandardIssue[] }) => FormErrors<T>;
+	parseErrors: (issuesOrError: readonly StandardIssue[] | { issues: readonly StandardIssue[] }) => FormErrors<T, E>;
 
 	/** Create a form-level error from a server error message */
-	setServerError: (message: string) => FormErrors<T>;
+	setServerError: (message: string) => FormErrors<T, E>;
 
 	/**
 	 * Merge field validation results into existing errors.
@@ -160,10 +172,10 @@ export type FormValidator<T extends Record<string, unknown>> = {
 	 * Used for real-time validation to update only the field being edited.
 	 */
 	mergeFieldErrors: (
-		current: FormErrors<T>,
-		field: keyof T & string,
-		fieldResult: FieldValidationResult<T>,
-	) => FormErrors<T>;
+		current: FormErrors<T, E>,
+		field: (keyof T & string) | E,
+		fieldResult: FieldValidationResult<T, E>,
+	) => FormErrors<T, E>;
 };
 
 // ---------------------------------------------------------------------------
@@ -272,14 +284,18 @@ function createValidateFn<T>(
  * {/if}
  * ```
  */
-export function createFormValidator<T extends Record<string, unknown>>(schema: SchemaInput<T>): FormValidator<T> {
+export function createFormValidator<T extends Record<string, unknown>, E extends string = never>(
+	schema: SchemaInput<T>,
+): FormValidator<T, E> {
 	const doValidate = createValidateFn(schema);
 
-	function parseErrors(issuesOrError: readonly StandardIssue[] | { issues: readonly StandardIssue[] }): FormErrors<T> {
+	function parseErrors(
+		issuesOrError: readonly StandardIssue[] | { issues: readonly StandardIssue[] },
+	): FormErrors<T, E> {
 		const issues = Array.isArray(issuesOrError)
 			? issuesOrError
 			: (issuesOrError as { issues: readonly StandardIssue[] }).issues;
-		const errors: FormErrors<T> = {} as FormErrors<T>;
+		const errors: FormErrors<T, E> = {} as FormErrors<T, E>;
 		for (const issue of issues) {
 			const firstSegment = issue.path?.[0];
 			if (firstSegment == null) {
@@ -287,25 +303,24 @@ export function createFormValidator<T extends Record<string, unknown>>(schema: S
 				errors._form.push(issue.message);
 				continue;
 			}
-			const field = resolvePathSegment(firstSegment) as keyof T | undefined;
+			const field = resolvePathSegment(firstSegment);
 			if (field) {
-				const fieldErrors = errors[field];
-				if (!fieldErrors) {
-					(errors as Record<string, string[]>)[field as string] = [];
+				if (!(errors as Record<string, string[]>)[field]) {
+					(errors as Record<string, string[]>)[field] = [];
 				}
-				(errors[field] as string[]).push(issue.message);
+				(errors as Record<string, string[]>)[field].push(issue.message);
 			}
 		}
 		return errors;
 	}
 
-	function validate(data: Record<string, unknown>): ValidationResult<T> {
+	function validate(data: Record<string, unknown>): ValidationResult<T, E> {
 		const result = doValidate(data);
 		if (result.ok) {
 			return {
 				valid: true,
 				data: result.data,
-				errors: {} as FormErrors<T>,
+				errors: {} as FormErrors<T, E>,
 			};
 		}
 		return {
@@ -315,10 +330,10 @@ export function createFormValidator<T extends Record<string, unknown>>(schema: S
 		};
 	}
 
-	function validateField(field: keyof T & string, data: Record<string, unknown>): FieldValidationResult<T> {
+	function validateField(field: (keyof T & string) | E, data: Record<string, unknown>): FieldValidationResult<T, E> {
 		const result = doValidate(data);
 		if (result.ok) {
-			return { errors: {} as FormErrors<T> };
+			return { errors: {} as FormErrors<T, E> };
 		}
 
 		// Extract only the errors for the specified field
@@ -333,29 +348,29 @@ export function createFormValidator<T extends Record<string, unknown>>(schema: S
 		}
 
 		if (fieldErrors.length === 0) {
-			return { errors: {} as FormErrors<T> };
+			return { errors: {} as FormErrors<T, E> };
 		}
 
 		return {
-			errors: { [field]: fieldErrors } as unknown as FormErrors<T>,
+			errors: { [field]: fieldErrors } as unknown as FormErrors<T, E>,
 		};
 	}
 
-	function setServerError(message: string): FormErrors<T> {
-		return { _form: [message] } as FormErrors<T>;
+	function setServerError(message: string): FormErrors<T, E> {
+		return { _form: [message] } as FormErrors<T, E>;
 	}
 
 	function mergeFieldErrors(
-		current: FormErrors<T>,
-		field: keyof T & string,
-		fieldResult: FieldValidationResult<T>,
-	): FormErrors<T> {
+		current: FormErrors<T, E>,
+		field: (keyof T & string) | E,
+		fieldResult: FieldValidationResult<T, E>,
+	): FormErrors<T, E> {
 		const merged = { ...current };
-		const fieldErrors = fieldResult.errors[field];
+		const fieldErrors = (fieldResult.errors as Record<string, string[]>)[field as string];
 		if (fieldErrors && fieldErrors.length > 0) {
-			(merged as Record<string, string[]>)[field] = fieldErrors;
+			(merged as Record<string, string[]>)[field as string] = fieldErrors;
 		} else {
-			delete merged[field];
+			delete (merged as Record<string, string[]>)[field as string];
 		}
 		return merged;
 	}

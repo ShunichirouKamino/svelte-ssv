@@ -72,13 +72,13 @@ export type BuildEnhanceOptions = {
  * @param options - Callback options
  * @returns A function to pass to SvelteKit's `use:enhance`
  */
-export function buildEnhanceHandler<T extends Record<string, unknown>>(
-	form: Form<T>,
+export function buildEnhanceHandler<T extends Record<string, unknown>, E extends string = never>(
+	form: Form<T, E>,
 	options?: BuildEnhanceOptions,
-): ReturnType<typeof createEnhanceHandler<T>> {
-	return createEnhanceHandler(form.validator, {
+): ReturnType<typeof createEnhanceHandler<T, E>> {
+	return createEnhanceHandler<T, E>(form.validator, {
 		getData: () => form.data,
-		setErrors: (e: FormErrors<T>) => {
+		setErrors: (e: FormErrors<T, E>) => {
 			const keys = Object.keys(form.data) as (keyof T & string)[];
 			for (const key of keys) {
 				form.touched[key] = true;

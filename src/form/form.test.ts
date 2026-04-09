@@ -288,6 +288,67 @@ describe("createForm", () => {
 	});
 
 	// ---------------------------------------------------------------
+	// Custom error keys (extra keys via E type parameter)
+	// ---------------------------------------------------------------
+
+	describe("custom error keys", () => {
+		const groupSchema = z
+			.object({
+				kbId: z.string().optional(),
+				kbName: z.string().optional(),
+				kbRegion: z.string().optional(),
+			})
+			.refine(
+				(data) => {
+					const fields = [data.kbId, data.kbName, data.kbRegion];
+					const filled = fields.filter(Boolean).length;
+					return filled === 0 || filled === 3;
+				},
+				{
+					message: "All fields must be filled or all must be empty",
+					path: ["_kbGroup"],
+				},
+			);
+
+		type GroupForm = z.infer<typeof groupSchema>;
+		const groupInitial: GroupForm = { kbId: undefined, kbName: undefined, kbRegion: undefined };
+
+		it("validate captures custom path errors in form.errors", () => {
+			const form = createForm<GroupForm, "_kbGroup">(groupSchema, groupInitial);
+			form.data.kbId = "id1";
+			const result = form.validate();
+
+			expect(result.valid).toBe(false);
+			expect(form.errors._kbGroup).toContain("All fields must be filled or all must be empty");
+		});
+
+		it("validate clears custom path errors when valid", () => {
+			const form = createForm<GroupForm, "_kbGroup">(groupSchema, groupInitial);
+			form.data.kbId = "id1";
+			form.validate();
+			expect(form.errors._kbGroup).toBeDefined();
+
+			// Fix: fill all fields
+			form.data.kbName = "name1";
+			form.data.kbRegion = "region1";
+			const result = form.validate();
+
+			expect(result.valid).toBe(true);
+			expect(form.errors._kbGroup).toBeUndefined();
+		});
+
+		it("reset clears custom path errors", () => {
+			const form = createForm<GroupForm, "_kbGroup">(groupSchema, groupInitial);
+			form.data.kbId = "id1";
+			form.validate();
+			expect(form.errors._kbGroup).toBeDefined();
+
+			form.reset();
+			expect(form.errors._kbGroup).toBeUndefined();
+		});
+	});
+
+	// ---------------------------------------------------------------
 	// populate
 	// ---------------------------------------------------------------
 

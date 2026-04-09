@@ -265,6 +265,97 @@ describe("cross-field validation", () => {
 });
 
 // ---------------------------------------------------------------
+// Custom error keys (extra keys via E type parameter)
+// ---------------------------------------------------------------
+
+describe("custom error keys", () => {
+	const groupSchema = z
+		.object({
+			kbId: z.string().optional(),
+			kbName: z.string().optional(),
+			kbRegion: z.string().optional(),
+		})
+		.refine(
+			(data) => {
+				const fields = [data.kbId, data.kbName, data.kbRegion];
+				const filled = fields.filter(Boolean).length;
+				return filled === 0 || filled === 3;
+			},
+			{
+				message: "All fields must be filled or all must be empty",
+				path: ["_kbGroup"],
+			},
+		);
+
+	type GroupForm = z.infer<typeof groupSchema>;
+
+	const validator = createFormValidator<GroupForm, "_kbGroup">(groupSchema);
+
+	it("assigns custom path errors to the extra key", () => {
+		const result = validator.validate({
+			kbId: "id1",
+			kbName: undefined,
+			kbRegion: undefined,
+		});
+		expect(result.valid).toBe(false);
+		expect(result.errors._kbGroup).toContain("All fields must be filled or all must be empty");
+	});
+
+	it("returns no custom key errors when validation passes", () => {
+		const result = validator.validate({
+			kbId: undefined,
+			kbName: undefined,
+			kbRegion: undefined,
+		});
+		expect(result.valid).toBe(true);
+		expect(result.errors._kbGroup).toBeUndefined();
+	});
+
+	it("retrieves custom key errors via validateField", () => {
+		const result = validator.validateField("_kbGroup", {
+			kbId: "id1",
+			kbName: undefined,
+			kbRegion: undefined,
+		});
+		expect(result.errors._kbGroup).toContain("All fields must be filled or all must be empty");
+	});
+
+	it("mergeFieldErrors works with custom keys", () => {
+		const current = { kbId: ["Some error"] } as ReturnType<typeof validator.validate>["errors"];
+		const fieldResult = validator.validateField("_kbGroup", {
+			kbId: "id1",
+			kbName: undefined,
+			kbRegion: undefined,
+		});
+		const merged = validator.mergeFieldErrors(current, "_kbGroup", fieldResult);
+		expect(merged.kbId).toEqual(["Some error"]);
+		expect(merged._kbGroup).toContain("All fields must be filled or all must be empty");
+	});
+
+	it("mergeFieldErrors removes custom key errors when resolved", () => {
+		const current = {
+			_kbGroup: ["All fields must be filled or all must be empty"],
+		} as ReturnType<typeof validator.validate>["errors"];
+		const fieldResult = validator.validateField("_kbGroup", {
+			kbId: undefined,
+			kbName: undefined,
+			kbRegion: undefined,
+		});
+		const merged = validator.mergeFieldErrors(current, "_kbGroup", fieldResult);
+		expect(merged._kbGroup).toBeUndefined();
+	});
+
+	it("parseErrors maps custom path keys correctly", () => {
+		const errors = validator.parseErrors([
+			{ path: ["_kbGroup"], message: "Group error" },
+			{ path: ["kbId"], message: "Field error" },
+		]);
+		expect(errors._kbGroup).toEqual(["Group error"]);
+		expect(errors.kbId).toEqual(["Field error"]);
+	});
+});
+
+// ---------------------------------------------------------------
 // Standard Schema V1 support
 // ---------------------------------------------------------------
 
