@@ -1,6 +1,6 @@
 {
   "name": "@svelte-ssv/core",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "exports": {
     ".": "./src/core/index.ts",
     "./form": "./src/form/index.ts",
