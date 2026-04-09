@@ -283,6 +283,14 @@ function createValidateFn<T>(
  *   <p class="text-red-600">{errors.name[0]}</p>
  * {/if}
  * ```
+ *
+ * @example Custom error keys for cross-field validation
+ * ```typescript
+ * // When using Zod .refine() with a custom path not in the schema,
+ * // pass the extra key as the second type parameter:
+ * const validator = createFormValidator<MyForm, '_groupError'>(schema);
+ * // validator.validate(...).errors._groupError is now type-safe
+ * ```
  */
 export function createFormValidator<T extends Record<string, unknown>, E extends string = never>(
 	schema: SchemaInput<T>,

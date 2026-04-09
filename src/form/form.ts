@@ -121,6 +121,16 @@ export type Form<T extends Record<string, unknown>, E extends string = never> = 
  * @param schema - A Standard Schema V1 or Zod-compatible schema
  * @param initial - Initial form data
  * @returns A `Form<T>` object
+ *
+ * @example Custom error keys for cross-field validation
+ * ```typescript
+ * // When using Zod .refine() with a custom path (e.g., path: ["_kbGroup"]),
+ * // pass the extra key as the second type parameter so form.errors._kbGroup
+ * // is type-safe. TypeScript cannot infer E from the schema, so it must be
+ * // specified explicitly:
+ * type MyForm = z.infer<typeof schema>;
+ * let form = $state(createForm<MyForm, '_kbGroup'>(schema, initial));
+ * ```
  */
 export function createForm<T extends Record<string, unknown>, E extends string = never>(
 	schema: SchemaInput<T>,
