@@ -39,13 +39,17 @@ import { createFormValidator } from "../core/validator";
  *
  * Holds reactive data, errors, touched/dirty tracking, and provides
  * methods for validation, blur handling, and reset.
+ *
+ * The optional second type parameter `E` allows declaring additional error keys
+ * for custom validation paths (e.g., Zod's `.refine()` with a `path` that does
+ * not correspond to any schema field).
  */
-export type Form<T extends Record<string, unknown>> = {
+export type Form<T extends Record<string, unknown>, E extends string = never> = {
 	/** Current form data (mutable, bind-friendly) */
 	data: T;
 
 	/** Current validation errors */
-	errors: FormErrors<T>;
+	errors: FormErrors<T, E>;
 
 	/** Per-field touched state (set to `true` on blur) */
 	touched: { [K in keyof T]: boolean };
@@ -57,7 +61,7 @@ export type Form<T extends Record<string, unknown>> = {
 	readonly isDirty: boolean;
 
 	/** The underlying FormValidator (useful for `createEnhanceHandler`) */
-	readonly validator: FormValidator<T>;
+	readonly validator: FormValidator<T, E>;
 
 	/**
 	 * Mark a field as touched, update dirty state, and run field validation.
@@ -71,7 +75,7 @@ export type Form<T extends Record<string, unknown>> = {
 	 *
 	 * Marks all fields as touched so that errors become visible.
 	 */
-	validate: () => ValidationResult<T>;
+	validate: () => ValidationResult<T, E>;
 
 	/** Reset form to its initial state (data, errors, touched, dirty). */
 	reset: () => void;
@@ -117,9 +121,22 @@ export type Form<T extends Record<string, unknown>> = {
  * @param schema - A Standard Schema V1 or Zod-compatible schema
  * @param initial - Initial form data
  * @returns A `Form<T>` object
+ *
+ * @example Custom error keys for cross-field validation
+ * ```typescript
+ * // When using Zod .refine() with a custom path (e.g., path: ["_kbGroup"]),
+ * // pass the extra key as the second type parameter so form.errors._kbGroup
+ * // is type-safe. TypeScript cannot infer E from the schema, so it must be
+ * // specified explicitly:
+ * type MyForm = z.infer<typeof schema>;
+ * let form = $state(createForm<MyForm, '_kbGroup'>(schema, initial));
+ * ```
  */
-export function createForm<T extends Record<string, unknown>>(schema: SchemaInput<T>, initial: T): Form<T> {
-	const _validator = createFormValidator(schema);
+export function createForm<T extends Record<string, unknown>, E extends string = never>(
+	schema: SchemaInput<T>,
+	initial: T,
+): Form<T, E> {
+	const _validator = createFormValidator<T, E>(schema);
 	const _initialData = structuredClone(initial);
 	const keys = Object.keys(initial) as (keyof T & string)[];
 
@@ -132,7 +149,7 @@ export function createForm<T extends Record<string, unknown>>(schema: SchemaInpu
 
 	return {
 		data: structuredClone(initial),
-		errors: {} as FormErrors<T>,
+		errors: {} as FormErrors<T, E>,
 		touched,
 		dirty,
 
@@ -140,7 +157,7 @@ export function createForm<T extends Record<string, unknown>>(schema: SchemaInpu
 			return keys.some((key) => this.data[key] !== _initialData[key]);
 		},
 
-		get validator(): FormValidator<T> {
+		get validator(): FormValidator<T, E> {
 			return _validator;
 		},
 
@@ -152,7 +169,7 @@ export function createForm<T extends Record<string, unknown>>(schema: SchemaInpu
 			this.errors = _validator.mergeFieldErrors(this.errors, field, result);
 		},
 
-		validate(): ValidationResult<T> {
+		validate(): ValidationResult<T, E> {
 			// Mark all fields as touched and update dirty state
 			for (const key of keys) {
 				this.touched[key] = true;
@@ -160,7 +177,7 @@ export function createForm<T extends Record<string, unknown>>(schema: SchemaInpu
 			}
 
 			const result = _validator.validate(this.data as Record<string, unknown>);
-			this.errors = result.valid ? ({} as FormErrors<T>) : result.errors;
+			this.errors = result.valid ? ({} as FormErrors<T, E>) : result.errors;
 			return result;
 		},
 
@@ -171,7 +188,7 @@ export function createForm<T extends Record<string, unknown>>(schema: SchemaInpu
 				this.touched[key] = false;
 				this.dirty[key] = false;
 			}
-			this.errors = {} as FormErrors<T>;
+			this.errors = {} as FormErrors<T, E>;
 		},
 
 		populate(newData: Partial<T>): void {
@@ -184,7 +201,7 @@ export function createForm<T extends Record<string, unknown>>(schema: SchemaInpu
 				this.touched[key] = false;
 				this.dirty[key] = false;
 			}
-			this.errors = {} as FormErrors<T>;
+			this.errors = {} as FormErrors<T, E>;
 		},
 	};
 }

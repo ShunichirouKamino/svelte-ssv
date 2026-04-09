@@ -146,6 +146,66 @@ describe("createEnhanceHandler", () => {
 });
 
 // ---------------------------------------------------------------
+// createEnhanceHandler — custom error keys
+// ---------------------------------------------------------------
+
+describe("createEnhanceHandler with custom error keys", () => {
+	const groupSchema = z
+		.object({
+			kbId: z.string().optional(),
+			kbName: z.string().optional(),
+			kbRegion: z.string().optional(),
+		})
+		.refine(
+			(data) => {
+				const fields = [data.kbId, data.kbName, data.kbRegion];
+				const filled = fields.filter(Boolean).length;
+				return filled === 0 || filled === 3;
+			},
+			{
+				message: "All fields must be filled or all must be empty",
+				path: ["_kbGroup"],
+			},
+		);
+
+	type GroupForm = z.infer<typeof groupSchema>;
+
+	const validator = createFormValidator<GroupForm, "_kbGroup">(groupSchema);
+
+	it("surfaces custom key errors on validation failure", () => {
+		const setErrors = vi.fn();
+		const handler = createEnhanceHandler(validator, {
+			getData: () => ({ kbId: "id1", kbName: undefined, kbRegion: undefined }),
+			setErrors,
+		});
+
+		const input = createMockInput();
+		handler(input);
+
+		expect(input.cancel).toHaveBeenCalled();
+		expect(setErrors).toHaveBeenCalledWith(
+			expect.objectContaining({
+				_kbGroup: expect.arrayContaining(["All fields must be filled or all must be empty"]),
+			}),
+		);
+	});
+
+	it("clears errors on successful validation with custom keys", () => {
+		const setErrors = vi.fn();
+		const handler = createEnhanceHandler(validator, {
+			getData: () => ({ kbId: undefined, kbName: undefined, kbRegion: undefined }),
+			setErrors,
+		});
+
+		const input = createMockInput();
+		handler(input);
+
+		expect(input.cancel).not.toHaveBeenCalled();
+		expect(setErrors).toHaveBeenCalledWith({});
+	});
+});
+
+// ---------------------------------------------------------------
 // buildEnhanceHandler
 // ---------------------------------------------------------------
 
@@ -215,6 +275,62 @@ describe("buildEnhanceHandler", () => {
 		const result = handler(input);
 
 		// Should pass validation since data was updated
+		expect(input.cancel).not.toHaveBeenCalled();
+		expect(result).toBeDefined();
+	});
+});
+
+// ---------------------------------------------------------------
+// buildEnhanceHandler — custom error keys
+// ---------------------------------------------------------------
+
+describe("buildEnhanceHandler with custom error keys", () => {
+	const groupSchema = z
+		.object({
+			kbId: z.string().optional(),
+			kbName: z.string().optional(),
+			kbRegion: z.string().optional(),
+		})
+		.refine(
+			(data) => {
+				const fields = [data.kbId, data.kbName, data.kbRegion];
+				const filled = fields.filter(Boolean).length;
+				return filled === 0 || filled === 3;
+			},
+			{
+				message: "All fields must be filled or all must be empty",
+				path: ["_kbGroup"],
+			},
+		);
+
+	type GroupForm = z.infer<typeof groupSchema>;
+
+	it("cancels on custom key validation failure and sets errors", () => {
+		const form = createForm<GroupForm, "_kbGroup">(groupSchema, {
+			kbId: "id1",
+			kbName: undefined,
+			kbRegion: undefined,
+		});
+		const handler = buildEnhanceHandler(form);
+
+		const input = createMockInput();
+		handler(input);
+
+		expect(input.cancel).toHaveBeenCalled();
+		expect(form.errors._kbGroup).toContain("All fields must be filled or all must be empty");
+	});
+
+	it("passes validation when all group fields are empty", () => {
+		const form = createForm<GroupForm, "_kbGroup">(groupSchema, {
+			kbId: undefined,
+			kbName: undefined,
+			kbRegion: undefined,
+		});
+		const handler = buildEnhanceHandler(form);
+
+		const input = createMockInput();
+		const result = handler(input);
+
 		expect(input.cancel).not.toHaveBeenCalled();
 		expect(result).toBeDefined();
 	});
