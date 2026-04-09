@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { createForm } from "@svelte-ssv/core/form";
-	import { userSchema, type User, type UserForm } from "$lib/schemas/user";
+	import { userSchema, type User, type UserForm, type UserExtraErrors } from "$lib/schemas/user";
 
 	// Mock data — in a real app this would come from a server load function
 	let users = $state<User[]>([
-		{ id: 1, name: "Alice", email: "alice@example.com", role: "Admin" },
-		{ id: 2, name: "Bob", email: "bob@example.com", role: "Editor" },
-		{ id: 3, name: "Charlie", email: "charlie@example.com", role: "Viewer" },
+		{ id: 1, name: "Alice", email: "alice@example.com", role: "Admin", age: 30 },
+		{ id: 2, name: "Bob", email: "bob@example.com", role: "Editor", age: 25 },
+		{ id: 3, name: "Charlie", email: "charlie@example.com", role: "Viewer", age: 15 },
 	]);
 
 	let form = $state(
-		createForm(userSchema, { name: "", email: "", role: "" }),
+		createForm<UserForm, UserExtraErrors>(userSchema, { name: "", email: "", role: "", age: 0 }),
 	);
 
 	let editTarget = $state<User | null>(null);
@@ -18,13 +18,13 @@
 
 	function openEdit(user: User) {
 		editTarget = user;
-		form.populate({ name: user.name, email: user.email, role: user.role });
+		form.populate({ name: user.name, email: user.email, role: user.role, age: user.age });
 		showDialog = true;
 	}
 
 	function openCreate() {
 		editTarget = null;
-		form.populate({ name: "", email: "", role: "" });
+		form.populate({ name: "", email: "", role: "", age: 0 });
 		showDialog = true;
 	}
 
@@ -57,7 +57,9 @@
 <h1>Edit Users <span class="badge">populate()</span></h1>
 <p class="description">
 	Click a user to edit. Demonstrates <code>form.populate()</code> for
-	loading existing data into the form with clean dirty/touched state.
+	loading existing data with clean dirty/touched state.<br />
+	<strong>Custom error keys demo:</strong> Try setting Role to "Admin" with Age &lt; 18.
+	The cross-field error (<code>_adminAge</code>) appears in the banner below the form fields.
 </p>
 
 <button type="button" class="create-btn" onclick={openCreate}>
@@ -70,6 +72,7 @@
 			<th>Name</th>
 			<th>Email</th>
 			<th>Role</th>
+			<th>Age</th>
 			<th></th>
 		</tr>
 	</thead>
@@ -79,6 +82,7 @@
 				<td>{user.name}</td>
 				<td>{user.email}</td>
 				<td><span class="role-badge">{user.role}</span></td>
+				<td>{user.age}</td>
 				<td>
 					<button class="edit-btn" onclick={() => openEdit(user)}>Edit</button>
 				</td>
@@ -140,6 +144,26 @@
 						<p class="error">{form.errors.role[0]}</p>
 					{/if}
 				</div>
+
+				<div class="field">
+					<label for="age">
+						Age
+						{#if form.dirty.age}<span class="dirty-badge">modified</span>{/if}
+					</label>
+					<input id="age" type="number" bind:value={form.data.age}
+						onblur={() => form.blur("age")}
+						class:invalid={form.touched.age && form.errors.age}
+					/>
+					{#if form.touched.age && form.errors.age}
+						<p class="error">{form.errors.age[0]}</p>
+					{/if}
+				</div>
+
+				{#if form.errors._adminAge}
+					<div class="cross-field-error">
+						⚠️ {form.errors._adminAge[0]}
+					</div>
+				{/if}
 
 				<div class="actions">
 					<button type="submit" class="submit-btn" disabled={!form.isDirty}>
@@ -216,6 +240,7 @@
 	.reset-btn:disabled { opacity: 0.4; cursor: default; }
 	.cancel-btn { padding: 0.5rem 1rem; background: none; border: none; font-size: 0.85rem; color: var(--color-text-muted); cursor: pointer; }
 	.dirty-notice { font-size: 0.8rem; color: var(--color-primary); font-style: italic; margin-top: 0.25rem; }
+	.cross-field-error { background: #fef2f2; border: 1px solid #fecaca; color: var(--color-error); padding: 0.5rem 0.75rem; border-radius: var(--radius); font-size: 0.85rem; margin-bottom: 0.5rem; }
 
 	.code-note { margin-top: 2rem; padding: 1rem 1.5rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); max-width: 600px; }
 	.code-note h2 { font-size: 0.95rem; margin-bottom: 0.5rem; }
