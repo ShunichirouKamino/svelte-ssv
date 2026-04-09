@@ -2,12 +2,12 @@
 	import { enhance } from "$app/forms";
 	import { createForm } from "@svelte-ssv/core/form";
 	import { buildEnhanceHandler } from "@svelte-ssv/core/enhance";
-	import { registerSchema } from "$lib/schemas/register";
+	import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "$lib/schemas/register";
 
 	let submitted = $state(false);
 
 	let form = $state(
-		createForm(registerSchema, {
+		createForm<RegisterForm, RegisterExtraErrors>(registerSchema, {
 			name: "",
 			email: "",
 			password: "",
@@ -71,6 +71,10 @@
 		{#if form.touched.confirmPassword && form.errors.confirmPassword}<p class="error">{form.errors.confirmPassword[0]}</p>{/if}
 	</div>
 
+	{#if form.errors._passwordMismatch}
+		<div class="cross-field-error">⚠️ {form.errors._passwordMismatch[0]}</div>
+	{/if}
+
 	{#if form.errors._form}
 		<p class="error form-error">{form.errors._form[0]}</p>
 	{/if}
@@ -95,6 +99,7 @@
 	input.invalid { border-color: var(--color-error); }
 	.error { color: var(--color-error); font-size: 0.8rem; }
 	.form-error { padding: 0.5rem 0.75rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius); }
+	.cross-field-error { background: #fef2f2; border: 1px solid #fecaca; color: var(--color-error); padding: 0.5rem 0.75rem; border-radius: var(--radius); font-size: 0.85rem; }
 	.actions { display: flex; gap: 0.75rem; }
 	.submit-btn { padding: 0.6rem 1.2rem; background: var(--color-primary); color: white; border: none; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; cursor: pointer; }
 	.submit-btn:hover { background: var(--color-primary-hover); }

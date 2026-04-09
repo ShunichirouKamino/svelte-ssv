@@ -2,17 +2,18 @@
 	import { enhance } from "$app/forms";
 	import { createForm } from "@svelte-ssv/core/form";
 	import { createEnhanceHandler } from "@svelte-ssv/core/enhance";
-	import { registerSchema, type RegisterForm } from "$lib/schemas/register";
+	import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "$lib/schemas/register";
 
-	const fieldLabels: Record<keyof RegisterForm, string> = {
+	const fieldLabels: Record<keyof RegisterForm | RegisterExtraErrors, string> = {
 		name: "Name",
 		email: "Email",
 		password: "Password",
 		confirmPassword: "Confirm Password",
+		_passwordMismatch: "Password Confirmation",
 	};
 
 	let form = $state(
-		createForm(registerSchema, {
+		createForm<RegisterForm, RegisterExtraErrors>(registerSchema, {
 			name: "",
 			email: "",
 			password: "",

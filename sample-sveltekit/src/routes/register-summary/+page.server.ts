@@ -1,9 +1,9 @@
 import type { Actions } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { createFormValidator } from "@svelte-ssv/core";
-import { registerSchema } from "$lib/schemas/register";
+import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "$lib/schemas/register";
 
-const validator = createFormValidator(registerSchema);
+const validator = createFormValidator<RegisterForm, RegisterExtraErrors>(registerSchema);
 
 export const actions = {
 	default: async ({ request }) => {

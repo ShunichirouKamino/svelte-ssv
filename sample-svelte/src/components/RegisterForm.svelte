@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { createForm, type Form } from "@svelte-ssv/core/form";
-	import { registerSchema, type RegisterData } from "../lib/schemas/register";
+	import { registerSchema, type RegisterData, type RegisterExtraErrors } from "../lib/schemas/register";
 
-	let form: Form<RegisterData> = $state(
-		createForm(registerSchema, { name: "", email: "", password: "", confirmPassword: "" }),
+	let form: Form<RegisterData, RegisterExtraErrors> = $state(
+		createForm<RegisterData, RegisterExtraErrors>(registerSchema, { name: "", email: "", password: "", confirmPassword: "" }),
 	);
 	let submitted = $state(false);
 
@@ -88,6 +88,12 @@
 		{/if}
 	</div>
 
+	{#if form.errors._passwordMismatch}
+		<div class="cross-field-error">
+			⚠️ {form.errors._passwordMismatch[0]}
+		</div>
+	{/if}
+
 	<div class="actions">
 		<button type="submit" class="submit-btn">Create Account</button>
 		<button type="button" class="reset-btn" onclick={() => form.reset()} disabled={!form.isDirty}>Reset</button>
@@ -118,4 +124,5 @@
 	.dirty-notice { font-size: 0.8rem; color: #4f46e5; font-style: italic; }
 	.success-banner { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.9rem; max-width: 400px; }
 	.success-banner button { background: none; border: none; color: #16a34a; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+	.cross-field-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 0.5rem 0.75rem; border-radius: 8px; font-size: 0.85rem; }
 </style>

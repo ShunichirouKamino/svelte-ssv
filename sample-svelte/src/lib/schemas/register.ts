@@ -9,7 +9,7 @@ export const registerSchema = z
 	})
 	.refine((data) => data.password === data.confirmPassword, {
 		message: "Passwords do not match",
-		path: ["confirmPassword"],
+		path: ["_passwordMismatch"],
 	});
 
 export type RegisterData = {
@@ -18,3 +18,6 @@ export type RegisterData = {
 	password: string;
 	confirmPassword: string;
 };
+
+/** Extra error keys from .refine() custom paths */
+export type RegisterExtraErrors = "_passwordMismatch";

@@ -1,16 +1,17 @@
 <script lang="ts">
 	import { createForm, type Form } from "@svelte-ssv/core/form";
-	import { registerSchema, type RegisterData } from "../lib/schemas/register";
+	import { registerSchema, type RegisterData, type RegisterExtraErrors } from "../lib/schemas/register";
 
-	const fieldLabels: Record<keyof RegisterData, string> = {
+	const fieldLabels: Record<keyof RegisterData | RegisterExtraErrors, string> = {
 		name: "Name",
 		email: "Email",
 		password: "Password",
 		confirmPassword: "Confirm Password",
+		_passwordMismatch: "Password Confirmation",
 	};
 
-	let form: Form<RegisterData> = $state(
-		createForm(registerSchema, { name: "", email: "", password: "", confirmPassword: "" }),
+	let form: Form<RegisterData, RegisterExtraErrors> = $state(
+		createForm<RegisterData, RegisterExtraErrors>(registerSchema, { name: "", email: "", password: "", confirmPassword: "" }),
 	);
 	let submitted = $state(false);
 	let showSummary = $state(false);
