@@ -51,11 +51,18 @@ type StandardIssue = {
  *
  * @see https://github.com/standard-schema/standard-schema
  */
+/** Result of Standard Schema V1 `validate` */
+export type StandardResult<T = unknown> = { readonly value: T } | { readonly issues: readonly StandardIssue[] };
+
 export type StandardSchema<T = unknown> = {
 	readonly "~standard": {
 		readonly version: 1;
 		readonly vendor: string;
-		readonly validate: (value: unknown) => { readonly value: T } | { readonly issues: readonly StandardIssue[] };
+		/**
+		 * Per the Standard Schema V1 spec, `validate` may return a Promise.
+		 * ssv only supports synchronous schemas and throws at runtime if a Promise is returned.
+		 */
+		readonly validate: (value: unknown) => StandardResult<T> | Promise<StandardResult<T>>;
 	};
 };
 

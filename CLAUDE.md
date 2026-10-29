@@ -21,6 +21,7 @@ Project-level instructions for Claude Code.
 ```bash
 npm run build        # tsup
 npm test             # vitest run
+npm run typecheck    # tsc incl. test files (tsconfig.test.json)
 npm run format       # biome format --write .
 npm run format:check # biome format . (CI uses this)
 ```
@@ -37,7 +38,8 @@ npm run format:check # biome format . (CI uses this)
 
 - **CI** (`.github/workflows/ci.yml`) — Runs on `main`, `feature/**`, PRs, and `workflow_dispatch`
   - `audit` job: `npm audit --omit=dev`
-  - `build` job: library build + `vitest`
+  - `build` job: library build + `vitest` + `typecheck`
+  - `sample-svelte` job: `svelte-check` + `vite build` of `sample-svelte`
   - `sample-sveltekit` job: `svelte-check` + `vite build` of `sample-sveltekit` against Kit 3 (as committed) and Kit 2 (latest 2.x with TS 5.8, same Vite 8 / vite-plugin-svelte 7 toolchain)
   - `biome` job: `npx biome format .`
 - **Pages** (`.github/workflows/pages.yml`) — Deploys `sample-svelte` to GitHub Pages on `main` push
