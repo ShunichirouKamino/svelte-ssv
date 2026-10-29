@@ -79,6 +79,33 @@ With ssv's `createForm`, the same behavior is a single line:
 | **Input wiring** (value, blur, `aria-invalid`) | `bind:value` + `onblur` + attribute per input | `{@attach form.field()}` |
 | **SvelteKit `use:enhance` integration** | cancel/update/result.type branching each form | `createEnhanceHandler()` / `buildEnhanceHandler()` |
 
+### ssv or SvelteKit remote functions?
+
+SvelteKit's [remote functions](https://svelte.dev/docs/kit/remote-functions) `form()` now covers most of what ssv does on the client (preflight validation, field issues, touched/dirty, `aria-invalid`). It is still **experimental** and SvelteKit-only, so:
+
+| Your situation | Use |
+|----------------|-----|
+| SvelteKit, and you can enable `experimental.remoteFunctions` | **Remote `form()`** |
+| SvelteKit with stable form actions + `use:enhance` | **ssv** (`createForm` + `buildEnhanceHandler`) |
+| Plain Svelte SPA (no SvelteKit) | **ssv** |
+| Same schema validation on server and client, outside SvelteKit | **ssv** (`createFormValidator` is framework-agnostic) |
+
+<details>
+<summary>API mapping (SvelteKit 3.1)</summary>
+
+| ssv | Remote `form()` |
+|-----|-----------------|
+| `buildEnhanceHandler` (client validation) | `.preflight(schema)` |
+| `form.errors.x` | `fields.x.issues()` |
+| `form.touched.x` / `form.dirty.x` | `fields.x.touched()` / `fields.x.dirty()` |
+| `form.validate()` | `validate({ all: true })` |
+| `form.populate(data)` | `fields.set(data)` |
+| `{@attach form.field('x')}` | `{...fields.x.as('text')}` |
+
+</details>
+
+See [ADR: Positioning vs. remote functions](adr/adr_20261029_ssv_remote_form_positioning.md).
+
 ### Features
 
 - **Validation-library agnostic** — Works with Zod, Valibot, ArkType, TypeBox, or any [Standard Schema V1](https://github.com/standard-schema/standard-schema) library
@@ -391,6 +418,7 @@ npx vitest --watch
 - [v0.3.1 Standard Schema](adr/adr_20260328_ssv_v031_standard_schema.md) — Standard Schema V1 support, dual-interface design
 - [v0.3.2 Enhance + Populate](adr/adr_20260330_ssv_v032_enhance_form_populate.md) — `form.populate()`, `buildEnhanceHandler()` sugar syntax
 - [form.field() attachment](adr/adr_20261029_ssv_field_attachment.md) — `{@attach form.field()}` to replace `bind:value` + `onblur`
+- [Remote form positioning](adr/adr_20261029_ssv_remote_form_positioning.md) — When to use ssv vs. SvelteKit remote functions `form()`
 
 ## License
 
