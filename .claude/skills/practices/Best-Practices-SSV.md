@@ -121,7 +121,7 @@ import type { ZodObject } from 'zod';
 
 ## 6. Schema Sharing Between Client and Server
 
-**Rule**: Define Zod schemas in a shared module (`$lib/schemas/`) and import from both client (`.svelte`) and server (`.server.ts`) files.
+**Rule**: Define Zod schemas in a shared module (`src/lib/schemas/`, imported via `#lib/schemas/*.ts` in SvelteKit 3 or `$lib/schemas/` in SvelteKit 2) and import from both client (`.svelte`) and server (`.server.ts`) files.
 
 ```
 sample/src/lib/schemas/register.ts    ← schema + type defined once
@@ -131,7 +131,7 @@ sample/src/routes/register/+page.server.ts    ← imports schema
 
 This prevents schema drift (client validates differently from server) and reduces duplication.
 
-**Review check**: If a Zod schema appears in both a `.svelte` file and a `.server.ts` file, flag it for extraction to `$lib/schemas/`.
+**Review check**: If a Zod schema appears in both a `.svelte` file and a `.server.ts` file, flag it for extraction to `src/lib/schemas/`.
 
 ---
 
