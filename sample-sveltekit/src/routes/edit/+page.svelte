@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createForm } from "@svelte-ssv/core/form";
-	import { userSchema, type User, type UserForm, type UserExtraErrors } from "$lib/schemas/user";
+	import { userSchema, type User, type UserForm, type UserExtraErrors } from "#lib/schemas/user.ts";
 
 	// Mock data — in a real app this would come from a server load function
 	let users = $state<User[]>([

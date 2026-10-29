@@ -6,7 +6,7 @@ export const userSchema = z
 		email: z.string().min(1, "Email is required").email("Invalid email format"),
 		role: z.string().min(1, "Role is required"),
 		age: z
-			.number({ invalid_type_error: "Age must be a number" })
+			.number({ error: "Age must be a number" })
 			.int("Age must be a whole number")
 			.min(0, "Age must be 0 or older")
 			.max(150, "Age must be 150 or younger"),

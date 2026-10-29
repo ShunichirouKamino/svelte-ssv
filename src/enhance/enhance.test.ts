@@ -85,6 +85,35 @@ describe("createEnhanceHandler", () => {
 		expect(onSuccess).toHaveBeenCalled();
 	});
 
+	it("calls onSuccess only after update() resolves", async () => {
+		// SvelteKit 3 may navigate inside update() (e.g. cross-page actions),
+		// so onSuccess must not run before update() has settled.
+		const calls: string[] = [];
+		const handler = createEnhanceHandler(validator, {
+			getData: () => ({ name: "Taro", email: "a@b.com" }),
+			setErrors: vi.fn(),
+			onSuccess: () => calls.push("onSuccess"),
+			onAfterSubmit: () => calls.push("onAfterSubmit"),
+		});
+
+		const input = createMockInput();
+		// biome-ignore lint/complexity/noBannedTypes: type assertion for testing
+		const afterSubmit = handler(input) as Function;
+
+		await afterSubmit({
+			update: async () => {
+				await new Promise((resolve) => setTimeout(resolve, 0));
+				calls.push("update");
+			},
+			result: { type: "success" },
+			formData: new FormData(),
+			formElement: document.createElement("form"),
+			action: new URL("http://localhost"),
+		});
+
+		expect(calls).toEqual(["update", "onSuccess", "onAfterSubmit"]);
+	});
+
 	it("does not call onSuccess on server failure", async () => {
 		const onSuccess = vi.fn();
 		const handler = createEnhanceHandler(validator, {

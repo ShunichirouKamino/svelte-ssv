@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { createForm, type Form } from "@svelte-ssv/core/form";
-	import { profileSchema, type ProfileForm } from "$lib/schemas/profile";
+	import { profileSchema, type ProfileForm } from "#lib/schemas/profile.ts";
 
 	let form: Form<ProfileForm> = $state(
 		createForm(profileSchema, { name: "", email: "", company: "", role: "" }),
