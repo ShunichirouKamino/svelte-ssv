@@ -2,7 +2,7 @@
 	import { enhance } from "$app/forms";
 	import { createForm } from "@svelte-ssv/core/form";
 	import { buildEnhanceHandler } from "@svelte-ssv/core/enhance";
-	import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "$lib/schemas/register";
+	import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "#lib/schemas/register.ts";
 
 	let submitted = $state(false);
 

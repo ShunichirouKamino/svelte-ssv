@@ -13,7 +13,7 @@ Project-level instructions for Claude Code.
   - `form/` — `createForm` (unified reactive form state)
   - `enhance/` — `createEnhanceHandler` / `buildEnhanceHandler` (SvelteKit `use:enhance` integration)
 - `sample-svelte/` — SPA demo app (Vite + Svelte, deployed to GitHub Pages)
-- `sample-sveltekit/` — SvelteKit demo app (server-side, local dev only)
+- `sample-sveltekit/` — SvelteKit 3 demo app (server-side, local dev only). Config lives in `vite.config.ts` (no `svelte.config.js`); import shared modules as `#lib/<path>.ts` (package.json `imports` + `allowImportingTsExtensions`; the `.ts` extension is required), not `$lib`
 - `adr/` — Architecture Decision Records
 
 ## Build and test
@@ -37,6 +37,8 @@ npm run format:check # biome format . (CI uses this)
 
 - **CI** (`.github/workflows/ci.yml`) — Runs on `main`, `feature/**`, PRs, and `workflow_dispatch`
   - `audit` job: `npm audit --omit=dev`
+  - `build` job: library build + `vitest`
+  - `sample-sveltekit` job: `svelte-check` + `vite build` of `sample-sveltekit` against Kit 3 (as committed) and Kit 2 (latest 2.x with TS 5.8, same Vite 8 / vite-plugin-svelte 7 toolchain)
   - `biome` job: `npx biome format .`
 - **Pages** (`.github/workflows/pages.yml`) — Deploys `sample-svelte` to GitHub Pages on `main` push
   - Pins `@svelte-ssv/core` to latest published npm version (not local `file:` ref)

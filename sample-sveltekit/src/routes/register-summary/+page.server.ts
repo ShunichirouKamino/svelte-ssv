@@ -1,7 +1,7 @@
 import type { Actions } from "./$types";
 import { fail } from "@sveltejs/kit";
 import { createFormValidator } from "@svelte-ssv/core";
-import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "$lib/schemas/register";
+import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "#lib/schemas/register.ts";
 
 const validator = createFormValidator<RegisterForm, RegisterExtraErrors>(registerSchema);
 

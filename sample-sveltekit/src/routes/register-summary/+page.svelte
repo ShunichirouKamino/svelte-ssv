@@ -2,7 +2,7 @@
 	import { enhance } from "$app/forms";
 	import { createForm } from "@svelte-ssv/core/form";
 	import { createEnhanceHandler } from "@svelte-ssv/core/enhance";
-	import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "$lib/schemas/register";
+	import { registerSchema, type RegisterForm, type RegisterExtraErrors } from "#lib/schemas/register.ts";
 
 	const fieldLabels: Record<keyof RegisterForm | RegisterExtraErrors, string> = {
 		name: "Name",

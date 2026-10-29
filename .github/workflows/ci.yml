@@ -43,6 +43,55 @@ jobs:
       - name: Test
         run: npm test
 
+  sample-sveltekit:
+    name: sample-sveltekit (Kit ${{ matrix.kit }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        kit: ["2", "3"]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+
+      - name: Build library
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install sample dependencies
+        working-directory: sample-sveltekit
+        run: npm ci
+
+      # The sample targets Kit 3. For Kit 2, swap in Kit 2-compatible packages
+      # and point tsconfig at the Kit 2 generated config ($app/tsconfig is Kit 3 only).
+      # `include` is dropped so the generated config's include list (ambient.d.ts,
+      # $env types, ...) applies, as in a real Kit 2 project.
+      - name: Downgrade to SvelteKit 2
+        if: matrix.kit == '2'
+        working-directory: sample-sveltekit
+        run: |
+          npm install --no-save @sveltejs/kit@^2.62 @sveltejs/adapter-auto@^7 typescript@~5.8
+          node -e '
+            const fs = require("fs");
+            const c = JSON.parse(fs.readFileSync("tsconfig.json", "utf8"));
+            c.extends = "./.svelte-kit/tsconfig.json";
+            delete c.include;
+            fs.writeFileSync("tsconfig.json", JSON.stringify(c, null, "\t"));
+          '
+
+      - name: Type check
+        working-directory: sample-sveltekit
+        run: npm run check
+
+      - name: Build
+        working-directory: sample-sveltekit
+        run: npm run build
+
   biome:
     runs-on: ubuntu-latest
     steps:

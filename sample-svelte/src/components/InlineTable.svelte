@@ -3,20 +3,20 @@
 	import { userSchema, type User, type UserForm } from "../lib/schemas/user";
 
 	let users = $state<User[]>([
-		{ id: 1, name: "Alice", email: "alice@example.com", role: "Admin" },
-		{ id: 2, name: "Bob", email: "bob@example.com", role: "Editor" },
-		{ id: 3, name: "Charlie", email: "charlie@example.com", role: "Viewer" },
+		{ id: 1, name: "Alice", email: "alice@example.com", role: "Admin", age: 34 },
+		{ id: 2, name: "Bob", email: "bob@example.com", role: "Editor", age: 28 },
+		{ id: 3, name: "Charlie", email: "charlie@example.com", role: "Viewer", age: 19 },
 	]);
 
 	let form: Form<UserForm> = $state(
-		createForm(userSchema, { name: "", email: "", role: "" }),
+		createForm(userSchema, { name: "", email: "", role: "", age: 0 }),
 	);
 
 	let editingId = $state<number | null>(null);
 
 	function startEdit(user: User) {
 		editingId = user.id;
-		form.populate({ name: user.name, email: user.email, role: user.role });
+		form.populate({ name: user.name, email: user.email, role: user.role, age: user.age });
 	}
 
 	function saveEdit() {
