@@ -69,12 +69,20 @@ jobs:
 
       # The sample targets Kit 3. For Kit 2, swap in Kit 2-compatible packages
       # and point tsconfig at the Kit 2 generated config ($app/tsconfig is Kit 3 only).
+      # `include` is dropped so the generated config's include list (ambient.d.ts,
+      # $env types, ...) applies, as in a real Kit 2 project.
       - name: Downgrade to SvelteKit 2
         if: matrix.kit == '2'
         working-directory: sample-sveltekit
         run: |
           npm install --no-save @sveltejs/kit@^2.62 @sveltejs/adapter-auto@^7 typescript@~5.8
-          sed -i 's#"\$app/tsconfig"#"./.svelte-kit/tsconfig.json"#' tsconfig.json
+          node -e '
+            const fs = require("fs");
+            const c = JSON.parse(fs.readFileSync("tsconfig.json", "utf8"));
+            c.extends = "./.svelte-kit/tsconfig.json";
+            delete c.include;
+            fs.writeFileSync("tsconfig.json", JSON.stringify(c, null, "\t"));
+          '
 
       - name: Type check
         working-directory: sample-sveltekit
