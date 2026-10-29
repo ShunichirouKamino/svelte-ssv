@@ -21,7 +21,8 @@
 <h1>Register Form</h1>
 <p class="description">
 	Unified form state via <code>createForm</code> with <strong>touched</strong> /
-	<strong>dirty</strong> tracking and cross-field validation (<code>.refine()</code>).
+	<strong>dirty</strong> tracking and cross-field validation (<code>.refine()</code>). Inputs use
+	<code>{"{@attach form.field()}"}</code> instead of <code>bind:value</code> + <code>onblur</code>.
 </p>
 
 {#if submitted}
@@ -37,10 +38,7 @@
 			Name
 			{#if form.dirty.name}<span class="dirty-badge">modified</span>{/if}
 		</label>
-		<input id="name" type="text" placeholder="Your name"
-			bind:value={form.data.name} onblur={() => form.blur("name")}
-			class:invalid={form.touched.name && form.errors.name}
-		/>
+		<input id="name" type="text" placeholder="Your name" {@attach form.field("name")} />
 		{#if form.touched.name && form.errors.name}
 			<p class="error">{form.errors.name[0]}</p>
 		{/if}
@@ -51,10 +49,7 @@
 			Email
 			{#if form.dirty.email}<span class="dirty-badge">modified</span>{/if}
 		</label>
-		<input id="email" type="email" placeholder="you@example.com"
-			bind:value={form.data.email} onblur={() => form.blur("email")}
-			class:invalid={form.touched.email && form.errors.email}
-		/>
+		<input id="email" type="email" placeholder="you@example.com" {@attach form.field("email")} />
 		{#if form.touched.email && form.errors.email}
 			<p class="error">{form.errors.email[0]}</p>
 		{/if}
@@ -65,10 +60,7 @@
 			Password
 			{#if form.dirty.password}<span class="dirty-badge">modified</span>{/if}
 		</label>
-		<input id="password" type="password" placeholder="At least 8 characters"
-			bind:value={form.data.password} onblur={() => form.blur("password")}
-			class:invalid={form.touched.password && form.errors.password}
-		/>
+		<input id="password" type="password" placeholder="At least 8 characters" {@attach form.field("password")} />
 		{#if form.touched.password && form.errors.password}
 			<p class="error">{form.errors.password[0]}</p>
 		{/if}
@@ -79,10 +71,7 @@
 			Confirm Password
 			{#if form.dirty.confirmPassword}<span class="dirty-badge">modified</span>{/if}
 		</label>
-		<input id="confirmPassword" type="password" placeholder="Re-enter your password"
-			bind:value={form.data.confirmPassword} onblur={() => form.blur("confirmPassword")}
-			class:invalid={form.touched.confirmPassword && form.errors.confirmPassword}
-		/>
+		<input id="confirmPassword" type="password" placeholder="Re-enter your password" {@attach form.field("confirmPassword")} />
 		{#if form.touched.confirmPassword && form.errors.confirmPassword}
 			<p class="error">{form.errors.confirmPassword[0]}</p>
 		{/if}
@@ -113,7 +102,7 @@
 	.dirty-badge { font-size: 0.7rem; font-weight: 500; color: #4f46e5; background: #eef2ff; padding: 0.1rem 0.4rem; border-radius: 4px; }
 	input { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
 	input:focus { border-color: #4f46e5; }
-	input.invalid { border-color: #dc2626; }
+	input:global([aria-invalid="true"]) { border-color: #dc2626; }
 	.error { color: #dc2626; font-size: 0.8rem; }
 	.actions { display: flex; gap: 0.75rem; }
 	.submit-btn { padding: 0.6rem 1.2rem; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }

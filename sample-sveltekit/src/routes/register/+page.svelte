@@ -16,7 +16,7 @@
 	);
 
 	// buildEnhanceHandler must be called AFTER $state() wrapping.
-	// It reads form.data through the Proxy to get latest bind:value values.
+	// It reads form.data through the Proxy to get the latest input values.
 	const handleEnhance = buildEnhanceHandler(form, {
 		onSuccess: () => {
 			submitted = true;
@@ -28,7 +28,8 @@
 <h1>Register Form</h1>
 <p class="description">
 	<code>createForm</code> + <code>buildEnhance()</code> — unified form state with
-	SvelteKit <code>use:enhance</code> in just 2 calls.
+	SvelteKit <code>use:enhance</code> in just 2 calls. Inputs use
+	<code>{"{@attach form.field()}"}</code> instead of <code>bind:value</code> + <code>onblur</code>.
 </p>
 
 {#if submitted}
@@ -41,33 +42,25 @@
 <form method="POST" novalidate use:enhance={handleEnhance}>
 	<div class="field">
 		<label for="name">Name {#if form.dirty.name}<span class="dirty-badge">modified</span>{/if}</label>
-		<input id="name" name="name" type="text" placeholder="Your name"
-			bind:value={form.data.name} onblur={() => form.blur("name")}
-			class:invalid={form.touched.name && form.errors.name} />
+		<input id="name" name="name" type="text" placeholder="Your name" {@attach form.field("name")} />
 		{#if form.touched.name && form.errors.name}<p class="error">{form.errors.name[0]}</p>{/if}
 	</div>
 
 	<div class="field">
 		<label for="email">Email {#if form.dirty.email}<span class="dirty-badge">modified</span>{/if}</label>
-		<input id="email" name="email" type="email" placeholder="you@example.com"
-			bind:value={form.data.email} onblur={() => form.blur("email")}
-			class:invalid={form.touched.email && form.errors.email} />
+		<input id="email" name="email" type="email" placeholder="you@example.com" {@attach form.field("email")} />
 		{#if form.touched.email && form.errors.email}<p class="error">{form.errors.email[0]}</p>{/if}
 	</div>
 
 	<div class="field">
 		<label for="password">Password {#if form.dirty.password}<span class="dirty-badge">modified</span>{/if}</label>
-		<input id="password" name="password" type="password" placeholder="At least 8 characters"
-			bind:value={form.data.password} onblur={() => form.blur("password")}
-			class:invalid={form.touched.password && form.errors.password} />
+		<input id="password" name="password" type="password" placeholder="At least 8 characters" {@attach form.field("password")} />
 		{#if form.touched.password && form.errors.password}<p class="error">{form.errors.password[0]}</p>{/if}
 	</div>
 
 	<div class="field">
 		<label for="confirmPassword">Confirm Password {#if form.dirty.confirmPassword}<span class="dirty-badge">modified</span>{/if}</label>
-		<input id="confirmPassword" name="confirmPassword" type="password" placeholder="Re-enter your password"
-			bind:value={form.data.confirmPassword} onblur={() => form.blur("confirmPassword")}
-			class:invalid={form.touched.confirmPassword && form.errors.confirmPassword} />
+		<input id="confirmPassword" name="confirmPassword" type="password" placeholder="Re-enter your password" {@attach form.field("confirmPassword")} />
 		{#if form.touched.confirmPassword && form.errors.confirmPassword}<p class="error">{form.errors.confirmPassword[0]}</p>{/if}
 	</div>
 
@@ -96,7 +89,7 @@
 	.dirty-badge { font-size: 0.7rem; font-weight: 500; color: var(--color-primary); background: #eef2ff; padding: 0.1rem 0.4rem; border-radius: 4px; }
 	input { padding: 0.5rem 0.75rem; border: 1px solid var(--color-border); border-radius: var(--radius); font-size: 0.9rem; outline: none; transition: border-color 0.15s; }
 	input:focus { border-color: var(--color-primary); }
-	input.invalid { border-color: var(--color-error); }
+	input:global([aria-invalid="true"]) { border-color: var(--color-error); }
 	.error { color: var(--color-error); font-size: 0.8rem; }
 	.form-error { padding: 0.5rem 0.75rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: var(--radius); }
 	.cross-field-error { background: #fef2f2; border: 1px solid #fecaca; color: var(--color-error); padding: 0.5rem 0.75rem; border-radius: var(--radius); font-size: 0.85rem; }

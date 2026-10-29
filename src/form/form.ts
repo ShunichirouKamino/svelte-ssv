@@ -35,6 +35,15 @@ import { createFormValidator } from "../core/validator";
 // ---------------------------------------------------------------------------
 
 /**
+ * A Svelte attachment (`{@attach ...}`) returned by `form.field()`.
+ *
+ * Declared structurally so the core has no dependency on `svelte`.
+ * Assignable to `Attachment<HTMLInputElement>`, `Attachment<HTMLTextAreaElement>`
+ * and `Attachment<HTMLSelectElement>`; other elements are rejected by the type checker.
+ */
+export type FieldAttachment = (element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) => () => void;
+
+/**
  * Unified form state object.
  *
  * Holds reactive data, errors, touched/dirty tracking, and provides
@@ -88,7 +97,106 @@ export type Form<T extends Record<string, unknown>, E extends string = never> = 
 	 * Useful for edit dialogs where existing data is loaded into the form.
 	 */
 	populate: (data: Partial<T>) => void;
+
+	/**
+	 * Create a Svelte attachment that wires an input to a field.
+	 *
+	 * Replaces `bind:value` + `onblur`: syncs the element value with
+	 * `form.data[name]`, calls `blur(name)` on blur, and sets `aria-invalid`
+	 * while the field is touched and invalid. It does not set `name`.
+	 *
+	 * Supports text-like `<input>`, `<textarea>`, single `<select>`,
+	 * `type="number" | "range"` (empty → `null`), `type="checkbox"` (boolean),
+	 * and `type="radio"`. For radio and select, the value is converted to a
+	 * number when the current field value is a number.
+	 *
+	 * Requires Svelte 5.29+ (`{@attach}`) and a form wrapped in `$state()`;
+	 * call it as `form.field(...)` (do not destructure). Attachments do not run
+	 * during SSR, so the server HTML has no value; use `bind:value` where the
+	 * initial value must be in the server-rendered markup.
+	 *
+	 * @example
+	 * ```svelte
+	 * <input {@attach form.field('name')} />
+	 * ```
+	 */
+	field: (name: keyof T & string) => FieldAttachment;
 };
+
+// ---------------------------------------------------------------------------
+// Field attachment helpers
+// ---------------------------------------------------------------------------
+
+type FieldElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+function inputType(el: FieldElement): string {
+	return el.tagName === "INPUT" ? (el as HTMLInputElement).type : "";
+}
+
+function isNumeric(el: FieldElement): boolean {
+	const type = inputType(el);
+	return type === "number" || type === "range";
+}
+
+/** Same coercion as Svelte's `bind:value` on number inputs */
+function toNumber(value: string): number | null {
+	return value === "" ? null : +value;
+}
+
+/**
+ * For radio / select, element values are always strings. Keep the field's
+ * type by converting to a number when the current field value is a number.
+ */
+function fromOptionValue(raw: string, current: unknown): unknown {
+	return typeof current === "number" ? toNumber(raw) : raw;
+}
+
+/** Elements whose value is changed by the user rather than by markup (e.g. typed before hydration). */
+function hasUserValue(el: FieldElement): boolean {
+	const type = inputType(el);
+	if (type === "checkbox" || type === "radio") {
+		const input = el as HTMLInputElement;
+		return input.checked !== input.defaultChecked;
+	}
+	if (el.tagName === "SELECT") {
+		// A single select with no `selected` option shows its first option by default
+		const options = Array.from((el as HTMLSelectElement).options);
+		const marked = options.findIndex((o) => o.defaultSelected);
+		const initial = marked !== -1 ? marked : options.length > 0 ? 0 : -1;
+		return (el as HTMLSelectElement).selectedIndex !== initial;
+	}
+	return el.value !== (el as HTMLInputElement | HTMLTextAreaElement).defaultValue;
+}
+
+function readValue(el: FieldElement, current: unknown): { value: unknown } | undefined {
+	const type = inputType(el);
+	if (type === "checkbox") return { value: (el as HTMLInputElement).checked };
+	if (type === "radio") {
+		return (el as HTMLInputElement).checked ? { value: fromOptionValue(el.value, current) } : undefined;
+	}
+	if (isNumeric(el)) return { value: toNumber(el.value) };
+	if (el.tagName === "SELECT") return { value: fromOptionValue(el.value, current) };
+	return { value: el.value };
+}
+
+function writeValue(el: FieldElement, value: unknown): void {
+	const type = inputType(el);
+	if (type === "checkbox") {
+		(el as HTMLInputElement).checked = Boolean(value);
+	} else if (type === "radio") {
+		(el as HTMLInputElement).checked = value != null && el.value === String(value);
+	} else if (isNumeric(el)) {
+		// Compare as numbers so intermediate input like "1." is not overwritten
+		if (toNumber(el.value) !== (value ?? null)) el.value = value == null ? "" : String(value);
+	} else {
+		const next = value == null ? "" : String(value);
+		// Guard to avoid moving the caret when the value is unchanged
+		if (el.value !== next) el.value = next;
+	}
+}
+
+/** Elements already wired by `field()`; the first run may adopt a user-entered value. */
+const initialized = new WeakSet<FieldElement>();
 
 // ---------------------------------------------------------------------------
 // Implementation
@@ -202,6 +310,58 @@ export function createForm<T extends Record<string, unknown>, E extends string =
 				this.dirty[key] = false;
 			}
 			this.errors = {} as FormErrors<T, E>;
+		},
+
+		field(name: keyof T & string): FieldAttachment {
+			// `this` is the $state proxy, so reads below are tracked by the
+			// attachment's effect and it re-runs on reset/populate/blur.
+			const form = this;
+			const data = form.data as Record<string, unknown>;
+			return (el) => {
+				const type = inputType(el);
+				if (type === "checkbox" && Array.isArray(data[name])) {
+					throw new TypeError(
+						`form.field("${name}"): checkbox groups (array values) are not supported. Use bind:group instead.`,
+					);
+				}
+
+				if (!initialized.has(el)) {
+					initialized.add(el);
+					// Keep what the user typed before hydration instead of overwriting it
+					const read = hasUserValue(el) ? readValue(el, data[name]) : undefined;
+					if (read) data[name] = read.value;
+				}
+				writeValue(el, data[name]);
+
+				if (form.touched[name] && form.errors[name]?.length) {
+					el.setAttribute("aria-invalid", "true");
+				} else {
+					el.removeAttribute("aria-invalid");
+				}
+
+				const onInput = () => {
+					const read = readValue(el, data[name]);
+					if (read) data[name] = read.value;
+				};
+				const onBlur = () => form.blur(name);
+
+				const event = type === "checkbox" || type === "radio" || el.tagName === "SELECT" ? "change" : "input";
+				el.addEventListener(event, onInput);
+				el.addEventListener("blur", onBlur);
+
+				// Options rendered after mount (e.g. loaded asynchronously): re-apply the value
+				let observer: MutationObserver | undefined;
+				if (el.tagName === "SELECT" && typeof MutationObserver !== "undefined") {
+					observer = new MutationObserver(() => writeValue(el, data[name]));
+					observer.observe(el, { childList: true, subtree: true });
+				}
+
+				return () => {
+					el.removeEventListener(event, onInput);
+					el.removeEventListener("blur", onBlur);
+					observer?.disconnect();
+				};
+			};
 		},
 	};
 }
