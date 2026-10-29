@@ -216,12 +216,26 @@ The attachment:
 - syncs the element with `form.data[name]` both ways (including after `reset()` / `populate()`)
 - calls `form.blur(name)` on blur
 - sets `aria-invalid="true"` while the field is touched and invalid
-- sets the `name` attribute if it is missing
+- keeps a value the user typed before hydration (copies it into `form.data`)
+- re-applies the value when `<select>` options are rendered later (e.g. loaded asynchronously)
 
-Supported elements: text-like `<input>`, `<textarea>`, single `<select>`, `type="number" | "range"` (empty → `null`), `type="checkbox"` (boolean), and `type="radio"` (value of the checked radio). For anything else (e.g. `<select multiple>`, files), keep using `bind:value` + `onblur`.
+It does **not** set `name`. Write `name` yourself when the form is submitted natively or with `use:enhance`.
 
-> [!NOTE]
-> Attachments only run in the browser. With SvelteKit SSR and progressive enhancement (`use:enhance` without JS), write the `name` attribute explicitly: `<input name="email" {@attach form.field('email')} />`.
+Supported elements:
+
+| Element | `form.data[name]` |
+|---------|-------------------|
+| text-like `<input>`, `<textarea>` | string |
+| `type="number"` / `"range"` | number, empty → `null` (same as `bind:value`) |
+| `type="checkbox"` | boolean |
+| `type="radio"`, single `<select>` | the selected value; converted to a number when the field currently holds a number |
+
+Not supported — keep using `bind:value` / `bind:group` + `onblur`: checkbox groups (array values; `field()` throws), `<select multiple>`, file inputs, custom components.
+
+Requirements and limitations:
+
+- The form must be wrapped in `$state()`, and `field` must be called as `form.field(...)` (not destructured). Otherwise values are not re-synced after `reset()` / `populate()` and `aria-invalid` does not update.
+- Attachments do not run during SSR, so the server-rendered HTML has **no value**. Where the initial value must be in the server HTML (e.g. an edit form that should work without JS), use `bind:value` for that input.
 
 ### SvelteKit Form with `use:enhance`
 

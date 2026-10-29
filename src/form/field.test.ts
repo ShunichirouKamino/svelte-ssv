@@ -29,22 +29,32 @@ function fire(el: Element, type: string) {
 
 describe("form.field()", () => {
 	describe("text input", () => {
-		it("writes the initial value and sets name", () => {
+		it("writes the initial value and does not set name", () => {
 			const form = createForm(schema, initial);
 			const el = input();
 			form.field("name")(el);
 
 			expect(el.value).toBe("Taro");
-			expect(el.getAttribute("name")).toBe("name");
+			expect(el.hasAttribute("name")).toBe(false);
 		});
 
-		it("keeps an existing name attribute", () => {
+		it("adopts a value typed before the first run (hydration)", () => {
 			const form = createForm(schema, initial);
 			const el = input();
-			el.setAttribute("name", "custom");
+			el.value = "typed before hydration";
 			form.field("name")(el);
 
-			expect(el.getAttribute("name")).toBe("custom");
+			expect(el.value).toBe("typed before hydration");
+			expect(form.data.name).toBe("typed before hydration");
+		});
+
+		it("does not treat the markup value attribute as user input", () => {
+			const form = createForm(schema, initial);
+			const el = input();
+			el.setAttribute("value", "from markup");
+			form.field("name")(el);
+
+			expect(el.value).toBe("Taro");
 		});
 
 		it("updates form.data on input", () => {
@@ -129,7 +139,8 @@ describe("form.field()", () => {
 
 		it("writes null/undefined as an empty string", () => {
 			const form = createForm(schema, initial);
-			const el = input("text", "x");
+			const el = input();
+			el.setAttribute("value", "x");
 			form.populate({ name: undefined as unknown as string });
 			form.field("name")(el);
 
@@ -236,6 +247,74 @@ describe("form.field()", () => {
 			free.checked = false;
 			fire(free, "change");
 			expect(form.data.plan).toBe("free");
+		});
+	});
+	describe("review fixes", () => {
+		const numSchema = z.object({ n: z.number(), tags: z.array(z.string()) });
+
+		function select(values: string[]): HTMLSelectElement {
+			const el = document.createElement("select");
+			for (const v of values) {
+				const opt = document.createElement("option");
+				opt.value = v;
+				el.append(opt);
+			}
+			return el;
+		}
+
+		it("radio with a numeric field checks the matching radio and keeps a number", () => {
+			const form = createForm(numSchema, { n: 2, tags: [] });
+			const radios = ["1", "2", "3"].map((v) => input("radio", v));
+			for (const r of radios) form.field("n")(r);
+
+			expect(radios.map((r) => r.checked)).toEqual([false, true, false]);
+
+			radios[0].checked = true;
+			fire(radios[0], "change");
+			expect(form.data.n).toBe(1);
+		});
+
+		it("select with a numeric field keeps a number", () => {
+			const form = createForm(numSchema, { n: 2, tags: [] });
+			const el = select(["1", "2"]);
+			form.field("n")(el);
+			expect(el.value).toBe("2");
+
+			el.value = "1";
+			fire(el, "change");
+			expect(form.data.n).toBe(1);
+		});
+
+		it("select re-applies the value when options are added after mount", async () => {
+			const form = createForm(schema, { ...initial, role: "Editor" });
+			const el = select([]);
+			form.field("role")(el);
+
+			for (const v of ["Admin", "Editor"]) {
+				const opt = document.createElement("option");
+				opt.value = v;
+				el.append(opt);
+			}
+			await new Promise((resolve) => setTimeout(resolve, 0));
+
+			expect(el.value).toBe("Editor");
+			expect(form.data.role).toBe("Editor");
+		});
+
+		it("select without an explicit selected option is not treated as user input", () => {
+			const form = createForm(schema, { ...initial, role: "Editor" });
+			const el = select(["", "Admin", "Editor"]);
+			form.field("role")(el);
+
+			expect(form.data.role).toBe("Editor");
+			expect(el.value).toBe("Editor");
+		});
+
+		it("throws for checkbox groups (array values)", () => {
+			const form = createForm(numSchema, { n: 0, tags: ["a"] });
+			const el = input("checkbox", "a");
+
+			expect(() => form.field("tags")(el)).toThrow(/bind:group/);
 		});
 	});
 });

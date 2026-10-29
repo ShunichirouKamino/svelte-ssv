@@ -16,7 +16,7 @@
 	);
 
 	// buildEnhanceHandler must be called AFTER $state() wrapping.
-	// It reads form.data through the Proxy to get latest bind:value values.
+	// It reads form.data through the Proxy to get the latest input values.
 	const handleEnhance = buildEnhanceHandler(form, {
 		onSuccess: () => {
 			submitted = true;

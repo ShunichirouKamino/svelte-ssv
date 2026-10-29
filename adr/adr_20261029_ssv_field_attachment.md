@@ -27,11 +27,16 @@ Add `form.field(name)` that returns an attachment:
 
 On each run, the attachment:
 
-1. Sets `name` if the element has none
+1. On the first run for an element only: if the element holds a user-entered value (differs from its markup default, e.g. typed before hydration), copies it into `form.data[name]`
 2. Writes `form.data[name]` into the element
 3. Sets / removes `aria-invalid="true"` based on `touched[name] && errors[name]`
 4. Adds an `input` (text-like) or `change` (checkbox / radio / select) listener that writes back to `form.data[name]`, and a `blur` listener that calls `form.blur(name)`
-5. Returns a cleanup that removes the listeners
+5. For `<select>`, observes option changes and re-applies the value
+6. Returns a cleanup that removes the listeners / observer
+
+It does not set `name`. An earlier draft did, but auto-named radios in two form instances outside a `<form>` element joined one browser radio group and unchecked each other.
+
+Radio and select values are strings in the DOM; when the field currently holds a number, the value is converted back to a number. Checkbox groups (array values) throw a `TypeError` instead of silently turning the array into a boolean.
 
 ### Reactivity model
 
@@ -44,7 +49,7 @@ Coercion follows Svelte's `bind:value` (`number` / `range`: `""` → `null`, oth
 
 ### No dependency on `svelte`
 
-The return type is declared structurally (`FieldAttachment = (element: Element) => () => void`) and is assignable to Svelte's `Attachment<HTMLInputElement>` etc. The core keeps zero runtime dependencies and no `svelte` peer dependency.
+The return type is declared structurally (`FieldAttachment = (element: HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement) => () => void`). It is assignable to Svelte's `Attachment<HTMLInputElement>` etc., and using it on other elements (e.g. `<div>`) is a type error. The `/form` declarations therefore reference DOM types, as `/enhance` already does. The core keeps zero runtime dependencies and no `svelte` peer dependency.
 
 ## Alternatives considered
 
@@ -58,6 +63,7 @@ The return type is declared structurally (`FieldAttachment = (element: Element) 
 
 - Opt-in and additive: `bind:value` + `onblur` keeps working
 - Requires Svelte 5.29+ only for consumers who use `field()`
-- Attachments do not run during SSR. For progressive enhancement in SvelteKit, `name` must still be written in markup
+- Attachments do not run during SSR: server HTML has no value. Inputs whose initial value must be server-rendered (edit forms without JS) should keep `bind:value`. Values typed before hydration are preserved
+- `name` must be written in markup for native / `use:enhance` submission
 - `aria-invalid` is applied at runtime, so component-scoped CSS must use `:global([aria-invalid='true'])` or Svelte prunes the selector
 - `<select multiple>`, file inputs and custom components are out of scope
