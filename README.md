@@ -76,6 +76,7 @@ With ssv's `createForm`, the same behavior is a single line:
 | Server error formatting | Build `{ _form: [msg] }` manually | `setServerError()` |
 | **Touched / dirty tracking** | Multiple `$state` declarations + manual blur handler | Built into `createForm()` |
 | **CRUD data population** | Manual state reset + dirty baseline management | `form.populate()` |
+| **Input wiring** (value, blur, `aria-invalid`) | `bind:value` + `onblur` + attribute per input | `{@attach form.field()}` |
 | **SvelteKit `use:enhance` integration** | cancel/update/result.type branching each form | `createEnhanceHandler()` / `buildEnhanceHandler()` |
 
 ### Features
@@ -83,6 +84,7 @@ With ssv's `createForm`, the same behavior is a single line:
 - **Validation-library agnostic** — Works with Zod, Valibot, ArkType, TypeBox, or any [Standard Schema V1](https://github.com/standard-schema/standard-schema) library
 - **Framework-agnostic core** — `createFormValidator` is pure TypeScript with zero framework dependencies
 - **Unified form state** — `createForm` bundles data, errors, touched, dirty, and isDirty into one reactive object
+- **One-attribute inputs** — `{@attach form.field('name')}` wires value sync, blur validation, and `aria-invalid` (Svelte 5.29+)
 - **CRUD-ready** — `form.populate(data)` seeds form data with a clean dirty baseline, ideal for edit dialogs and step forms
 - **SvelteKit integration** — Optional `@svelte-ssv/core/enhance` reduces `use:enhance` boilerplate to a single attribute
 - **Tiny** — ~3 KB source, no runtime dependencies
@@ -192,6 +194,34 @@ const validator = createFormValidator(schema);
   <button type="button" onclick={() => form.reset()} disabled={!form.isDirty}>Reset</button>
 </form>
 ```
+
+### One-attribute inputs with `form.field()`
+
+With Svelte 5.29+ [attachments](https://svelte.dev/docs/svelte/@attach), `form.field(name)` replaces `bind:value` + `onblur`:
+
+```svelte
+<input {@attach form.field('name')} />
+{#if form.touched.name && form.errors.name}
+  <p class="error">{form.errors.name[0]}</p>
+{/if}
+
+<style>
+  /* aria-invalid is set at runtime, so mark the selector :global */
+  input:global([aria-invalid='true']) { border-color: red; }
+</style>
+```
+
+The attachment:
+
+- syncs the element with `form.data[name]` both ways (including after `reset()` / `populate()`)
+- calls `form.blur(name)` on blur
+- sets `aria-invalid="true"` while the field is touched and invalid
+- sets the `name` attribute if it is missing
+
+Supported elements: text-like `<input>`, `<textarea>`, single `<select>`, `type="number" | "range"` (empty → `null`), `type="checkbox"` (boolean), and `type="radio"` (value of the checked radio). For anything else (e.g. `<select multiple>`, files), keep using `bind:value` + `onblur`.
+
+> [!NOTE]
+> Attachments only run in the browser. With SvelteKit SSR and progressive enhancement (`use:enhance` without JS), write the `name` attribute explicitly: `<input name="email" {@attach form.field('email')} />`.
 
 ### SvelteKit Form with `use:enhance`
 
@@ -305,6 +335,7 @@ let form = $state(createForm(schema, { name: '', email: '' }));
 // form.validate()     — validate all + mark all touched
 // form.reset()        — restore initial state
 // form.populate(data) — set data + clear errors/touched/dirty + update baseline
+// form.field(name)    — Svelte attachment: value sync + blur + aria-invalid
 ```
 
 ### `@svelte-ssv/core/enhance` — SvelteKit Helper
@@ -359,6 +390,7 @@ npx vitest --watch
 - [v0.2 Enhancement](adr/adr_20260325_ssv_v02_enhancement.md) — Real-time validation, enhance handler, TanStack Form comparison
 - [v0.3.1 Standard Schema](adr/adr_20260328_ssv_v031_standard_schema.md) — Standard Schema V1 support, dual-interface design
 - [v0.3.2 Enhance + Populate](adr/adr_20260330_ssv_v032_enhance_form_populate.md) — `form.populate()`, `buildEnhanceHandler()` sugar syntax
+- [form.field() attachment](adr/adr_20261029_ssv_field_attachment.md) — `{@attach form.field()}` to replace `bind:value` + `onblur`
 
 ## License
 

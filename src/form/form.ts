@@ -35,6 +35,14 @@ import { createFormValidator } from "../core/validator";
 // ---------------------------------------------------------------------------
 
 /**
+ * A Svelte attachment (`{@attach ...}`) returned by `form.field()`.
+ *
+ * Declared structurally so the core has no dependency on `svelte`.
+ * Compatible with `Attachment<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>`.
+ */
+export type FieldAttachment = (element: Element) => () => void;
+
+/**
  * Unified form state object.
  *
  * Holds reactive data, errors, touched/dirty tracking, and provides
@@ -88,7 +96,63 @@ export type Form<T extends Record<string, unknown>, E extends string = never> = 
 	 * Useful for edit dialogs where existing data is loaded into the form.
 	 */
 	populate: (data: Partial<T>) => void;
+
+	/**
+	 * Create a Svelte attachment that wires an input to a field.
+	 *
+	 * Replaces `bind:value` + `onblur`: syncs the element value with
+	 * `form.data[name]`, calls `blur(name)` on blur, sets `aria-invalid`
+	 * while the field is touched and invalid, and sets `name` if missing.
+	 *
+	 * Supports text-like `<input>`, `<textarea>`, single `<select>`,
+	 * `type="number" | "range"` (empty → `null`), `type="checkbox"` (boolean),
+	 * and `type="radio"` (value of the checked radio).
+	 *
+	 * Requires Svelte 5.29+ (`{@attach}`).
+	 *
+	 * @example
+	 * ```svelte
+	 * <input {@attach form.field('name')} />
+	 * ```
+	 */
+	field: (name: keyof T & string) => FieldAttachment;
 };
+
+// ---------------------------------------------------------------------------
+// Field attachment helpers
+// ---------------------------------------------------------------------------
+
+type FieldElement = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+
+function inputType(el: FieldElement): string {
+	return el.tagName === "INPUT" ? (el as HTMLInputElement).type : "";
+}
+
+function isNumeric(el: FieldElement): boolean {
+	const type = inputType(el);
+	return type === "number" || type === "range";
+}
+
+/** Same coercion as Svelte's `bind:value` on number inputs */
+function toNumber(value: string): number | null {
+	return value === "" ? null : +value;
+}
+
+function writeValue(el: FieldElement, value: unknown): void {
+	const type = inputType(el);
+	if (type === "checkbox") {
+		(el as HTMLInputElement).checked = Boolean(value);
+	} else if (type === "radio") {
+		(el as HTMLInputElement).checked = el.value === value;
+	} else if (isNumeric(el)) {
+		// Compare as numbers so intermediate input like "1." is not overwritten
+		if (toNumber(el.value) !== (value ?? null)) el.value = value == null ? "" : String(value);
+	} else {
+		const next = value == null ? "" : String(value);
+		// Guard to avoid moving the caret when the value is unchanged
+		if (el.value !== next) el.value = next;
+	}
+}
 
 // ---------------------------------------------------------------------------
 // Implementation
@@ -202,6 +266,44 @@ export function createForm<T extends Record<string, unknown>, E extends string =
 				this.dirty[key] = false;
 			}
 			this.errors = {} as FormErrors<T, E>;
+		},
+
+		field(name: keyof T & string): FieldAttachment {
+			// `this` is the $state proxy, so reads below are tracked by the
+			// attachment's effect and it re-runs on reset/populate/blur.
+			const form = this;
+			return (element) => {
+				const el = element as FieldElement;
+				const type = inputType(el);
+
+				if (!el.getAttribute("name")) el.setAttribute("name", name);
+				writeValue(el, form.data[name]);
+				if (form.touched[name] && form.errors[name]?.length) {
+					el.setAttribute("aria-invalid", "true");
+				} else {
+					el.removeAttribute("aria-invalid");
+				}
+
+				const onInput = () => {
+					let value: unknown;
+					if (type === "checkbox") value = (el as HTMLInputElement).checked;
+					else if (type === "radio") {
+						if (!(el as HTMLInputElement).checked) return;
+						value = el.value;
+					} else if (isNumeric(el)) value = toNumber(el.value);
+					else value = el.value;
+					(form.data as Record<string, unknown>)[name] = value;
+				};
+				const onBlur = () => form.blur(name);
+
+				const event = type === "checkbox" || type === "radio" || el.tagName === "SELECT" ? "change" : "input";
+				el.addEventListener(event, onInput);
+				el.addEventListener("blur", onBlur);
+				return () => {
+					el.removeEventListener(event, onInput);
+					el.removeEventListener("blur", onBlur);
+				};
+			};
 		},
 	};
 }
