@@ -43,6 +43,38 @@ jobs:
       - name: Test
         run: npm test
 
+      # Type-checks tests too (they are excluded from the build tsconfig),
+      # including Valibot / ArkType assignability to SchemaInput
+      - name: Typecheck
+        run: npm run typecheck
+
+  sample-svelte:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "24"
+
+      - name: Build library
+        run: |
+          npm ci
+          npm run build
+
+      - name: Install sample dependencies
+        working-directory: sample-svelte
+        run: npm ci
+
+      - name: Type check
+        working-directory: sample-svelte
+        run: npm run check
+
+      - name: Build
+        working-directory: sample-svelte
+        run: npm run build
+
   sample-sveltekit:
     name: sample-sveltekit (Kit ${{ matrix.kit }})
     runs-on: ubuntu-latest

@@ -30,6 +30,7 @@ export type {
 	FormErrors,
 	FormValidator,
 	SchemaInput,
+	StandardResult,
 	StandardSchema,
 	ValidationResult,
 	ZodSchema,

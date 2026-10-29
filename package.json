@@ -59,7 +59,8 @@
 		"test": "vitest run",
 		"format": "biome format --write .",
 		"format:check": "biome format .",
-		"prepublishOnly": "npm run build && npm test"
+		"prepublishOnly": "npm run build && npm test",
+		"typecheck": "tsc -p tsconfig.test.json"
 	},
 	"peerDependencies": {
 		"zod": "^3.25.0 || ^4.0.0"
@@ -71,9 +72,11 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.4.9",
+		"arktype": "^2.2.9",
 		"jsdom": "^29.0.1",
 		"tsup": "^8.5.1",
 		"typescript": "~5.8.0",
+		"valibot": "^1.5.0",
 		"vitest": "^4.1.1",
 		"zod": "^4.3.6"
 	}
