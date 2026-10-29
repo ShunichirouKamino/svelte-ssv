@@ -79,6 +79,37 @@ With ssv's `createForm`, the same behavior is a single line:
 | **Input wiring** (value, blur, `aria-invalid`) | `bind:value` + `onblur` + attribute per input | `{@attach form.field()}` |
 | **SvelteKit `use:enhance` integration** | cancel/update/result.type branching each form | `createEnhanceHandler()` / `buildEnhanceHandler()` |
 
+### ssv or SvelteKit remote functions?
+
+SvelteKit's [remote functions](https://svelte.dev/docs/kit/remote-functions) `form()` now covers most of what ssv does on the client (preflight validation, field issues, touched/dirty, `aria-invalid`). It is still **experimental** (you must enable both `experimental.remoteFunctions` and Svelte's `compilerOptions.experimental.async`), SvelteKit-only, and needs a server runtime because forms submit to a server endpoint. So:
+
+| Your situation | Use |
+|----------------|-----|
+| SvelteKit with a server, and you can enable the experimental flags above | **Remote `form()`** |
+| SvelteKit with stable form actions + `use:enhance` | **ssv** (`createForm` + `buildEnhanceHandler`) |
+| SvelteKit SPA / static build without a server | **ssv** |
+| Plain Svelte SPA (no SvelteKit) | **ssv** |
+| Same schema validation on server and client, outside SvelteKit | **ssv** (`createFormValidator` is framework-agnostic) |
+
+<details>
+<summary>Closest equivalents (SvelteKit 3.1) — not drop-in replacements</summary>
+
+| ssv | Remote `form()` | Difference |
+|-----|-----------------|------------|
+| `buildEnhanceHandler` (client validation) | `.preflight(schema)` | |
+| `form.errors.x` | `fields.x.issues()` | |
+| `form.touched.x` | `fields.x.touched()` | Kit sets it on `focusout`, ssv on `blur()` |
+| `form.dirty.x` | `fields.x.dirty()` | ssv: value differs from the baseline (back to `false` when reverted). Kit: edited at least once since mount (stays `true`) |
+| `form.validate()` | `myForm.validate({ all: true })` | Kit's is async, returns `void`, and calls the server when there is no `.preflight()` schema. ssv's is sync and returns the result |
+| `form.populate(data)` (edit dialogs) | `{...fields.x.as('text', value)}` | Kit's second argument sets the element's default value (used on reset). `fields.set()` replaces the input but does not reset touched/dirty |
+| `{@attach form.field('x')}` | `{...fields.x.as('text')}` | Kit's spread props are server-rendered; `field()` is client-only |
+
+`touched()` / `dirty()` are present in the 3.1.0 type definitions but not yet described in the docs.
+
+</details>
+
+See [ADR: Positioning vs. remote functions](adr/adr_20261029_ssv_remote_form_positioning.md).
+
 ### Features
 
 - **Validation-library agnostic** — Works with Zod, Valibot, ArkType, TypeBox, or any [Standard Schema V1](https://github.com/standard-schema/standard-schema) library
@@ -405,6 +436,7 @@ npx vitest --watch
 - [v0.3.1 Standard Schema](adr/adr_20260328_ssv_v031_standard_schema.md) — Standard Schema V1 support, dual-interface design
 - [v0.3.2 Enhance + Populate](adr/adr_20260330_ssv_v032_enhance_form_populate.md) — `form.populate()`, `buildEnhanceHandler()` sugar syntax
 - [form.field() attachment](adr/adr_20261029_ssv_field_attachment.md) — `{@attach form.field()}` to replace `bind:value` + `onblur`
+- [Remote form positioning](adr/adr_20261029_ssv_remote_form_positioning.md) — When to use ssv vs. SvelteKit remote functions `form()`
 
 ## License
 
