@@ -81,26 +81,30 @@ With ssv's `createForm`, the same behavior is a single line:
 
 ### ssv or SvelteKit remote functions?
 
-SvelteKit's [remote functions](https://svelte.dev/docs/kit/remote-functions) `form()` now covers most of what ssv does on the client (preflight validation, field issues, touched/dirty, `aria-invalid`). It is still **experimental** and SvelteKit-only, so:
+SvelteKit's [remote functions](https://svelte.dev/docs/kit/remote-functions) `form()` now covers most of what ssv does on the client (preflight validation, field issues, touched/dirty, `aria-invalid`). It is still **experimental** (you must enable both `experimental.remoteFunctions` and Svelte's `compilerOptions.experimental.async`), SvelteKit-only, and needs a server runtime because forms submit to a server endpoint. So:
 
 | Your situation | Use |
 |----------------|-----|
-| SvelteKit, and you can enable `experimental.remoteFunctions` | **Remote `form()`** |
+| SvelteKit with a server, and you can enable the experimental flags above | **Remote `form()`** |
 | SvelteKit with stable form actions + `use:enhance` | **ssv** (`createForm` + `buildEnhanceHandler`) |
+| SvelteKit SPA / static build without a server | **ssv** |
 | Plain Svelte SPA (no SvelteKit) | **ssv** |
 | Same schema validation on server and client, outside SvelteKit | **ssv** (`createFormValidator` is framework-agnostic) |
 
 <details>
-<summary>API mapping (SvelteKit 3.1)</summary>
+<summary>Closest equivalents (SvelteKit 3.1) — not drop-in replacements</summary>
 
-| ssv | Remote `form()` |
-|-----|-----------------|
-| `buildEnhanceHandler` (client validation) | `.preflight(schema)` |
-| `form.errors.x` | `fields.x.issues()` |
-| `form.touched.x` / `form.dirty.x` | `fields.x.touched()` / `fields.x.dirty()` |
-| `form.validate()` | `validate({ all: true })` |
-| `form.populate(data)` | `fields.set(data)` |
-| `{@attach form.field('x')}` | `{...fields.x.as('text')}` |
+| ssv | Remote `form()` | Difference |
+|-----|-----------------|------------|
+| `buildEnhanceHandler` (client validation) | `.preflight(schema)` | |
+| `form.errors.x` | `fields.x.issues()` | |
+| `form.touched.x` | `fields.x.touched()` | Kit sets it on `focusout`, ssv on `blur()` |
+| `form.dirty.x` | `fields.x.dirty()` | ssv: value differs from the baseline (back to `false` when reverted). Kit: edited at least once since mount (stays `true`) |
+| `form.validate()` | `myForm.validate({ all: true })` | Kit's is async, returns `void`, and calls the server when there is no `.preflight()` schema. ssv's is sync and returns the result |
+| `form.populate(data)` (edit dialogs) | `{...fields.x.as('text', value)}` | Kit's second argument sets the element's default value (used on reset). `fields.set()` replaces the input but does not reset touched/dirty |
+| `{@attach form.field('x')}` | `{...fields.x.as('text')}` | Kit's spread props are server-rendered; `field()` is client-only |
+
+`touched()` / `dirty()` are present in the 3.1.0 type definitions but not yet described in the docs.
 
 </details>
 
