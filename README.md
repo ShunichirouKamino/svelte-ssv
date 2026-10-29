@@ -76,13 +76,46 @@ With ssv's `createForm`, the same behavior is a single line:
 | Server error formatting | Build `{ _form: [msg] }` manually | `setServerError()` |
 | **Touched / dirty tracking** | Multiple `$state` declarations + manual blur handler | Built into `createForm()` |
 | **CRUD data population** | Manual state reset + dirty baseline management | `form.populate()` |
+| **Input wiring** (value, blur, `aria-invalid`) | `bind:value` + `onblur` + attribute per input | `{@attach form.field()}` |
 | **SvelteKit `use:enhance` integration** | cancel/update/result.type branching each form | `createEnhanceHandler()` / `buildEnhanceHandler()` |
+
+### ssv or SvelteKit remote functions?
+
+SvelteKit's [remote functions](https://svelte.dev/docs/kit/remote-functions) `form()` now covers most of what ssv does on the client (preflight validation, field issues, touched/dirty, `aria-invalid`). It is still **experimental** (you must enable both `experimental.remoteFunctions` and Svelte's `compilerOptions.experimental.async`), SvelteKit-only, and needs a server runtime because forms submit to a server endpoint. So:
+
+| Your situation | Use |
+|----------------|-----|
+| SvelteKit with a server, and you can enable the experimental flags above | **Remote `form()`** |
+| SvelteKit with stable form actions + `use:enhance` | **ssv** (`createForm` + `buildEnhanceHandler`) |
+| SvelteKit SPA / static build without a server | **ssv** |
+| Plain Svelte SPA (no SvelteKit) | **ssv** |
+| Same schema validation on server and client, outside SvelteKit | **ssv** (`createFormValidator` is framework-agnostic) |
+
+<details>
+<summary>Closest equivalents (SvelteKit 3.1) — not drop-in replacements</summary>
+
+| ssv | Remote `form()` | Difference |
+|-----|-----------------|------------|
+| `buildEnhanceHandler` (client validation) | `.preflight(schema)` | |
+| `form.errors.x` | `fields.x.issues()` | |
+| `form.touched.x` | `fields.x.touched()` | Kit sets it on `focusout`, ssv on `blur()` |
+| `form.dirty.x` | `fields.x.dirty()` | ssv: value differs from the baseline (back to `false` when reverted). Kit: edited at least once since mount (stays `true`) |
+| `form.validate()` | `myForm.validate({ all: true })` | Kit's is async, returns `void`, and calls the server when there is no `.preflight()` schema. ssv's is sync and returns the result |
+| `form.populate(data)` (edit dialogs) | `{...fields.x.as('text', value)}` | Kit's second argument sets the element's default value (used on reset). `fields.set()` replaces the input but does not reset touched/dirty |
+| `{@attach form.field('x')}` | `{...fields.x.as('text')}` | Kit's spread props are server-rendered; `field()` is client-only |
+
+`touched()` / `dirty()` are present in the 3.1.0 type definitions but not yet described in the docs.
+
+</details>
+
+See [ADR: Positioning vs. remote functions](adr/adr_20261029_ssv_remote_form_positioning.md).
 
 ### Features
 
 - **Validation-library agnostic** — Works with Zod, Valibot, ArkType, TypeBox, or any [Standard Schema V1](https://github.com/standard-schema/standard-schema) library
 - **Framework-agnostic core** — `createFormValidator` is pure TypeScript with zero framework dependencies
 - **Unified form state** — `createForm` bundles data, errors, touched, dirty, and isDirty into one reactive object
+- **One-attribute inputs** — `{@attach form.field('name')}` wires value sync, blur validation, and `aria-invalid` (Svelte 5.29+)
 - **CRUD-ready** — `form.populate(data)` seeds form data with a clean dirty baseline, ideal for edit dialogs and step forms
 - **SvelteKit integration** — Optional `@svelte-ssv/core/enhance` reduces `use:enhance` boilerplate to a single attribute
 - **Tiny** — ~3 KB source, no runtime dependencies
@@ -192,6 +225,48 @@ const validator = createFormValidator(schema);
   <button type="button" onclick={() => form.reset()} disabled={!form.isDirty}>Reset</button>
 </form>
 ```
+
+### One-attribute inputs with `form.field()`
+
+With Svelte 5.29+ [attachments](https://svelte.dev/docs/svelte/@attach), `form.field(name)` replaces `bind:value` + `onblur`:
+
+```svelte
+<input {@attach form.field('name')} />
+{#if form.touched.name && form.errors.name}
+  <p class="error">{form.errors.name[0]}</p>
+{/if}
+
+<style>
+  /* aria-invalid is set at runtime, so mark the selector :global */
+  input:global([aria-invalid='true']) { border-color: red; }
+</style>
+```
+
+The attachment:
+
+- syncs the element with `form.data[name]` both ways (including after `reset()` / `populate()`)
+- calls `form.blur(name)` on blur
+- sets `aria-invalid="true"` while the field is touched and invalid
+- keeps a value the user typed before hydration (copies it into `form.data`)
+- re-applies the value when `<select>` options are rendered later (e.g. loaded asynchronously)
+
+It does **not** set `name`. Write `name` yourself when the form is submitted natively or with `use:enhance`.
+
+Supported elements:
+
+| Element | `form.data[name]` |
+|---------|-------------------|
+| text-like `<input>`, `<textarea>` | string |
+| `type="number"` / `"range"` | number, empty → `null` (same as `bind:value`) |
+| `type="checkbox"` | boolean |
+| `type="radio"`, single `<select>` | the selected value; converted to a number when the field currently holds a number |
+
+Not supported — keep using `bind:value` / `bind:group` + `onblur`: checkbox groups (array values; `field()` throws), `<select multiple>`, file inputs, custom components.
+
+Requirements and limitations:
+
+- The form must be wrapped in `$state()`, and `field` must be called as `form.field(...)` (not destructured). Otherwise values are not re-synced after `reset()` / `populate()` and `aria-invalid` does not update.
+- Attachments do not run during SSR, so the server-rendered HTML has **no value**. Where the initial value must be in the server HTML (e.g. an edit form that should work without JS), use `bind:value` for that input.
 
 ### SvelteKit Form with `use:enhance`
 
@@ -305,6 +380,7 @@ let form = $state(createForm(schema, { name: '', email: '' }));
 // form.validate()     — validate all + mark all touched
 // form.reset()        — restore initial state
 // form.populate(data) — set data + clear errors/touched/dirty + update baseline
+// form.field(name)    — Svelte attachment: value sync + blur + aria-invalid
 ```
 
 ### `@svelte-ssv/core/enhance` — SvelteKit Helper
@@ -359,6 +435,8 @@ npx vitest --watch
 - [v0.2 Enhancement](adr/adr_20260325_ssv_v02_enhancement.md) — Real-time validation, enhance handler, TanStack Form comparison
 - [v0.3.1 Standard Schema](adr/adr_20260328_ssv_v031_standard_schema.md) — Standard Schema V1 support, dual-interface design
 - [v0.3.2 Enhance + Populate](adr/adr_20260330_ssv_v032_enhance_form_populate.md) — `form.populate()`, `buildEnhanceHandler()` sugar syntax
+- [form.field() attachment](adr/adr_20261029_ssv_field_attachment.md) — `{@attach form.field()}` to replace `bind:value` + `onblur`
+- [Remote form positioning](adr/adr_20261029_ssv_remote_form_positioning.md) — When to use ssv vs. SvelteKit remote functions `form()`
 
 ## License
 
